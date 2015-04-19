@@ -32,7 +32,7 @@ def parse_tr(html, Type='td'):
         elif isinstance(child, NavigableString) and not isinstance(child, Comment):
             t += child.strip('\n').strip()#看看有没有纯文本
         elif not len(child.findChildren()):
-            t += child.text.strip('\n').strip()
+            t += child.text.replace('\n','').strip()
     return t
 
 class InfoboxSpider(scrapy.Spider):
