@@ -18,10 +18,10 @@ NEWSPIDER_MODULE = 'infobox_crawler.spiders'
 
 WIKI='zhwiki'
 
-ENWIKI_FILE = ''
-ZHWIKI_FILE = '' 
+ENWIKI_FILE = '/home/keg/data/wikiraw/enwiki-infobox-tmp.dat' 
+ZHWIKI_FILE = '/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat' 
 ENWIKI_URL = "http://en.wikipedia.org/wiki/"
 ZHWIKI_URL = "http://zh.wikipedia.org/zh-cn/"
-ENWIKI_OUTPUT = ''
-ZHWIKI_OUTPUT = ''
+ENWIKI_OUTPUT = '/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
+ZHWIKI_OUTPUT = '/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
 

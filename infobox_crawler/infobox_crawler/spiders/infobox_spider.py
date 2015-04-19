@@ -2,7 +2,7 @@
 #-*- coding:utf-8 -*-
 import scrapy
 from scrapy.selector import Selector
-import infobox_crawler.settings
+from infobox_crawler import settings
 from bs4 import BeautifulSoup
 from bs4 import NavigableString, Comment
 
@@ -38,32 +38,32 @@ class InfoboxSpider(scrapy.Spider):
     ]
 
     def __init__(self):
-        url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E8%8F%AF%E6%B0%91%E5%9C%8B%E5%9C%8B%E6%97%97"
-        url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD"
+        #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E8%8F%AF%E6%B0%91%E5%9C%8B%E5%9C%8B%E6%97%97"
+        #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD"
         #url = "http://en.wikipedia.org/wiki/Albert_Einstein"
-        self.start_urls.append(url)
-        self.output = None
-        #self.read_url()
+        #self.start_urls.append(url)
+        self.fo = None
+        self.count = 0 #
+        self.read_url()
 
     def read_url(self):
         fname = settings.ZHWIKI_FILE if "zhwiki" == settings.WIKI else settings.ENWIKI_FILE
         print "Infobox File:",fname
         url = settings.ZHWIKI_URL if "zhwiki" == settings.WIKI else settings.ENWIKI_URL
-        self.output = settings.ZHWIKI_OUTPUT if "zhwiki" == settings.WIKI else settings.ENWIKI_OUTPUT
-        for line in fname:
+        output = settings.ZHWIKI_OUTPUT if "zhwiki" == settings.WIKI else settings.ENWIKI_OUTPUT
+        self.fo = open(output, 'w')
+        for line in open(fname):
             if "Infobox " in line:
                 title = line.split('\t\t')[0]
-                start_urls.append(os.path.join(url,title))
-        print "URLs:",len(start_urls)
+                InfoboxSpider.start_urls.append(os.path.join(url,title))
+        print "URLs:",len(InfoboxSpider.start_urls)
 
     def parse(self, response):
         #print urllib.urlencode(response.url)
-        f = None
-        if self.output:
-            f = open(self.output, 'w')
         print urllib.unquote(response.url)
         title = urllib.unquote(response.url.split('/')[-1])
-        print title
+        self.count += 1
+        print self.count,title
         sel = Selector(response=response)
         boxes = sel.xpath('//table[contains(@class,"infobox")]')
         prop_v = []
@@ -91,10 +91,10 @@ class InfoboxSpider(scrapy.Spider):
                     prop_v.append(th_t.encode('utf-8')+"::="+td_t.encode('utf-8'))
         "::;".join(prop_v)
         line = "%s\t\t%s\n"%(title, "::;".join(prop_v))
-        print line
-        if f:
-            f.write(line)
-            f.flush()
+        #print line
+        if self.fo:
+            self.fo.write(line)
+            self.fo.flush()
                     #print th_t+":",td_t
 
 
