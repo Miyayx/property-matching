@@ -14,10 +14,14 @@ def parse_tr(html, Type='td'):
     """
     对infobox的cell进行处理，处理th还是td通过Type决定，两者处理机制基本一样
     """
+    print "Type:",Type
     t = ""
     soup = BeautifulSoup(html)
-    for child in soup.find(Type).findChildren():
-        if 'sup' == child.parent.name:#不要上标
+    children = soup.find(Type).findChildren()
+    if not len(children):
+        return soup.text
+    for child in children:
+        if 'a' == child.name and 'sup' == child.parent.name:#不要上标
             continue
         elif 'a' == child.name and child.get('title'):#有title属性的
             text = child.text.replace('\n','').strip() # 网页中的text可能有换行，用''替换下'\n'
@@ -41,6 +45,7 @@ class InfoboxSpider(scrapy.Spider):
         #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E8%8F%AF%E6%B0%91%E5%9C%8B%E5%9C%8B%E6%97%97"
         #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD"
         #url = "http://en.wikipedia.org/wiki/Albert_Einstein"
+        #url = "http://zh.wikipedia.org/zh-cn/不列颠哥伦比亚"
         #self.start_urls.append(url)
         self.fo = None
         self.count = 0 #
@@ -70,28 +75,32 @@ class InfoboxSpider(scrapy.Spider):
         for box in boxes:
             trs = box.css('tr')
             for tr in trs:
-                th = tr.css('th')
-                td = tr.css('td') 
-                if th and td: #只取property和value的键值对,没有th和td的话,就跳过
-                    th_t = []
-                    if th.css('a'): #th 分为有链接和纯文本两种
-                        th_t = parse_tr(th.extract()[0], Type='th')
-                    else:#纯文本
-                        th_t = th.css('::text').extract()[0]
+                if len(tr.css('td')) == 2:
+                    th = tr.css('td')[0]
+                    td = tr.css('td')[1]
+                else:
+                    th = tr.css('th') 
+                    td = tr.css('td')
+                    if not th or not td:
+                        continue
+                    th = th[0]
+                    td = td[0]
+                if th and td and td.css('::text'): #只取property和value的键值对,没有th和td的话,就跳过, td没有值也跳过
+                    #th 分为有链接和纯文本两种
+                    th_t = parse_tr(th.extract(), Type=th.extract()[1:3])
 
                     # td分为有链接(链接可能有多个)，纯文本，文本与链接混合
-                    td_t = ""
-                    if td.css('a'):
-                        td_t = parse_tr(td.extract()[0])
+                    #if td.css('a'):
+                    td_t = parse_tr(td.extract())
 
                     # 这里无所谓文本顺序，尽可能保证文字的完整性，后面用cosine和抽取出来的infobox文本对比一下，找到对应
-                    else:
-                        td_t = td.css('::text').extract()[0]
+                    #else:
+                    #    td_t = td.css('::text').extract()[0]
 
                     prop_v.append(th_t.encode('utf-8')+"::="+td_t.encode('utf-8'))
         "::;".join(prop_v)
         line = "%s\t\t%s\n"%(title, "::;".join(prop_v))
-        #print line
+        print line
         if self.fo:
             self.fo.write(line)
             self.fo.flush()
