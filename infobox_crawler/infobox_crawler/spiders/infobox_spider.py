@@ -12,9 +12,11 @@ import urllib
 
 def read_lastline(fn):
     line = ""
+    c = 0
     for line in open(fn):
+        c += 1
         pass
-    return line
+    return line, c
 
 def parse_tr(html, Type='td'):
     """
@@ -64,7 +66,8 @@ class InfoboxSpider(scrapy.Spider):
         print "Infobox File:",fname
         url = configs['URL_PREFIX']
         output = configs['OUTPUT']
-        p = read_lastline(output).split('\t\t')[0] #读取断点文本
+        ll, c = read_lastline(output) 
+        p = ll.split('\t\t')[0]#读取断点文本
         print "BreakPoint:",p
 
         if settings.CONTINUE: #输出文件
@@ -74,7 +77,7 @@ class InfoboxSpider(scrapy.Spider):
        
         fi = open(fname)
         if settings.CONTINUE:
-
+            self.count = c
             line = fi.readline()
             while(not line.split('\t\t')[0] == p):
                 line = fi.readline()
