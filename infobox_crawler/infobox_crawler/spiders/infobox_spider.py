@@ -2,6 +2,7 @@
 #-*- coding:utf-8 -*-
 import scrapy
 from scrapy.selector import Selector
+from scrapy.http import Request
 from infobox_crawler import settings
 from bs4 import BeautifulSoup
 from bs4 import NavigableString, Comment
@@ -45,11 +46,10 @@ def parse_tr(html, Type='td'):
 
 class InfoboxSpider(scrapy.Spider):
     name = "infobox"
-    allowed_domains = [""]
-    start_urls = [
-    ]
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super(InfoboxSpider, self).__init__(*args, **kwargs)
+        self.start_urls = []
         #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E8%8F%AF%E6%B0%91%E5%9C%8B%E5%9C%8B%E6%97%97"
         #url = "https://zh.wikipedia.org/zh-cn/%E4%B8%AD%E5%8D%8E%E4%BA%BA%E6%B0%91%E5%85%B1%E5%92%8C%E5%9B%BD"
         #url = "http://en.wikipedia.org/wiki/Albert_Einstein"
@@ -58,13 +58,13 @@ class InfoboxSpider(scrapy.Spider):
         self.fo = None
         self.fp = None
         self.count = 0 #
-        self.read_url()
+        #self.read_url()
 
-    def read_url(self):
+    def start_requests(self):
         configs = settings.WIKI_CONFIG[settings.WIKI]
         fname = configs['FILE']
         print "Infobox File:",fname
-        url = configs['URL_PREFIX']
+        url_prefix = configs['URL_PREFIX']
         output = configs['OUTPUT']
         ll, c = read_lastline(output) 
         p = ll.split('\t\t')[0]#读取断点文本
@@ -85,15 +85,21 @@ class InfoboxSpider(scrapy.Spider):
         while(line):
             if "::::" in line: #::::证明这里有infobox
                 title = line.split('\t\t')[0]
-                InfoboxSpider.start_urls.append(os.path.join(url,title))
+                url = os.path.join(url_prefix,title)
+                self.start_urls.append(url)
+                yield self.make_requests_from_url(url, {'title': title})
             line = fi.readline()
         fi.close()
-        print "URLs:",len(InfoboxSpider.start_urls)
+        print "URLs:",len(self.start_urls)
+
+    def make_requests_from_url(self, url, meta):
+       return Request(url, callback=self.parse, dont_filter=True, meta=meta)
+
 
     def parse(self, response):
         #print urllib.urlencode(response.url)
         print urllib.unquote(response.url)
-        title = urllib.unquote(response.url.split('/')[-1])
+        title = response.meta['title']
         self.count += 1
         print self.count,title
         sel = Selector(response=response)
