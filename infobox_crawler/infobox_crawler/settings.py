@@ -17,11 +17,19 @@ NEWSPIDER_MODULE = 'infobox_crawler.spiders'
 #USER_AGENT = 'infobox_crawler (+http://www.yourdomain.com)'
 
 WIKI='zhwiki'
+CONTINUE = True #是否断点续爬
 
-ENWIKI_FILE = '/home/keg/data/wikiraw/enwiki-infobox-tmp.dat' 
-ZHWIKI_FILE = '/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat' 
-ENWIKI_URL = "http://en.wikipedia.org/wiki/"
-ZHWIKI_URL = "http://zh.wikipedia.org/zh-cn/"
-ENWIKI_OUTPUT = '/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
-ZHWIKI_OUTPUT = '/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
+WIKI_CONFIG = {
+    'enwiki':{
+        'FILE'      :'/home/keg/data/wikiraw/enwiki-infobox-tmp.dat',
+        'URL_PREFIX':'http://en.wikipedia.org/wiki/',
+        'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
+    },
+    'zhwiki':{
+        'FILE'      :'/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat',
+        'URL_PREFIX':'http://zh.wikipedia.org/zh-cn/',
+        'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
+    }
+}
+
 

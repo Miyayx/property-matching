@@ -10,11 +10,17 @@ import os
 import codecs
 import urllib
 
+def read_lastline(fn):
+    line = ""
+    for line in open(fn):
+        pass
+    return line
+
 def parse_tr(html, Type='td'):
     """
     对infobox的cell进行处理，处理th还是td通过Type决定，两者处理机制基本一样
     """
-    print "Type:",Type
+    #print "Type:",Type
     t = ""
     soup = BeautifulSoup(html)
     children = soup.find(Type).findChildren()
@@ -48,19 +54,37 @@ class InfoboxSpider(scrapy.Spider):
         #url = "http://zh.wikipedia.org/zh-cn/不列颠哥伦比亚"
         #self.start_urls.append(url)
         self.fo = None
+        self.fp = None
         self.count = 0 #
         self.read_url()
 
     def read_url(self):
-        fname = settings.ZHWIKI_FILE if "zhwiki" == settings.WIKI else settings.ENWIKI_FILE
+        configs = settings.WIKI_CONFIG[settings.WIKI]
+        fname = configs['FILE']
         print "Infobox File:",fname
-        url = settings.ZHWIKI_URL if "zhwiki" == settings.WIKI else settings.ENWIKI_URL
-        output = settings.ZHWIKI_OUTPUT if "zhwiki" == settings.WIKI else settings.ENWIKI_OUTPUT
-        self.fo = open(output, 'w')
-        for line in open(fname):
-            if "Infobox " in line:
+        url = configs['URL_PREFIX']
+        output = configs['OUTPUT']
+        p = read_lastline(output).split('\t\t')[0] #读取断点文本
+        print "BreakPoint:",p
+
+        if settings.CONTINUE: #输出文件
+            self.fo = open(output, 'a')
+        else:
+            self.fo = open(output, 'w')
+       
+        fi = open(fname)
+        if settings.CONTINUE:
+
+            line = fi.readline()
+            while(not line.split('\t\t')[0] == p):
+                line = fi.readline()
+        line = fi.readline()
+        while(line):
+            if "::::" in line: #::::证明这里有infobox
                 title = line.split('\t\t')[0]
                 InfoboxSpider.start_urls.append(os.path.join(url,title))
+            line = fi.readline()
+        fi.close()
         print "URLs:",len(InfoboxSpider.start_urls)
 
     def parse(self, response):
@@ -100,7 +124,7 @@ class InfoboxSpider(scrapy.Spider):
                     prop_v.append(th_t.encode('utf-8')+"::="+td_t.encode('utf-8'))
         "::;".join(prop_v)
         line = "%s\t\t%s\n"%(title, "::;".join(prop_v))
-        print line
+        #print line
         if self.fo:
             self.fo.write(line)
             self.fo.flush()
