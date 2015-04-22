@@ -9,6 +9,8 @@ ZHWIKI_DUMP_INFOBOX = '/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat'
 ENWIKI_CRAWL_INFOBOX = '/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
 ZHWIKI_CRAWL_INFOBOX = '/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
 
+ZHWIKI_OUTPUT = '/home/keg/data/infobox/zhwiki-infobox-matched.dat'
+
 def read_titles(fn):
     return [line.split('\t\t')[0] for line in open(fn)]
     
@@ -102,7 +104,12 @@ def main():
     dnum = dump_stat(infoboxes)
     pnum = page_stat(infoboxes)
 
-    combine_prop(infoboxes)
+    infoboxes = combine_prop(infoboxes)
+    with open(ZHWIKI_OUTPUT, 'w') as f:
+        for infobox in infoboxes:
+            f.write('%s\t\t%s\t\t%s\t\t%s\n'%(infobox.prop_label, infobox.link_label, infobox.dump_label, infobox.value))
+            f.flush()
+
 
 if __name__ == "__main__":
     main()
