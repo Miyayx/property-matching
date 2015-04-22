@@ -10,6 +10,10 @@ from bs4 import NavigableString, Comment
 import os 
 import codecs
 import urllib
+import urllib2
+
+def read_finished(fn):
+    return [line.split('\t\t')[0] for line in open(fn)]
 
 def read_lastline(fn):
     line = ""
@@ -66,9 +70,9 @@ class InfoboxSpider(scrapy.Spider):
         print "Infobox File:",fname
         url_prefix = configs['URL_PREFIX']
         output = configs['OUTPUT']
-        ll, c = read_lastline(output) 
-        p = ll.split('\t\t')[0]#读取断点文本
-        print "BreakPoint:",p
+
+        fin = read_finished(output)
+        self.count = len(fin)
 
         if settings.CONTINUE: #输出文件
             self.fo = open(output, 'a')
@@ -76,33 +80,51 @@ class InfoboxSpider(scrapy.Spider):
             self.fo = open(output, 'w')
        
         fi = open(fname)
-        if settings.CONTINUE:
-            self.count = c
-            line = fi.readline()
-            while(not line.split('\t\t')[0] == p):
-                line = fi.readline()
+        #if settings.CONTINUE:
+        #    ll, c = read_lastline(output) 
+        #    p = ll.split('\t\t')[0]#读取断点文本
+        #    print "BreakPoint:",p
+        #    self.count = c
+        #    line = fi.readline()
+        #    while(not line.split('\t\t')[0] == p):
+        #        line = fi.readline()
+
         line = fi.readline()
         while(line):
             if "::::" in line: #::::证明这里有infobox
                 title = line.split('\t\t')[0]
-                url = os.path.join(url_prefix,title)
-                self.start_urls.append(url)
-                yield self.make_requests_from_url(url, {'title': title})
+                if not title in fin:
+                    url = os.path.join(url_prefix,title)
+                    self.start_urls.append(url)
+                    if settings.URLLIB2:
+                        yield self.make_requests_from_url('http://www.baidu.com', {'title': title,'no':len(self.start_urls)-1})
+                    else:
+                        yield self.make_requests_from_url(url, {'title': title,'no':len(self.start_urls)-1})
             line = fi.readline()
         fi.close()
         print "URLs:",len(self.start_urls)
 
     def make_requests_from_url(self, url, meta):
-       return Request(url, callback=self.parse, dont_filter=True, meta=meta)
-
+       return Request(url, callback=self.parse, dont_filter=True, meta=meta, headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36'})
 
     def parse(self, response):
-        #print urllib.urlencode(response.url)
-        print urllib.unquote(response.url)
+        no = response.meta['no']
         title = response.meta['title']
+
+        if settings.URLLIB2:
+            #伪装为浏览器  
+            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'    
+            headers = {'User-Agent':user_agent} 
+            req = urllib2.Request(self.start_urls[no], headers=headers)  
+            response = urllib2.urlopen(req)
+            sel = Selector(text = response.read())
+        else:
+            sel = Selector(response = response)
+
+        print urllib.unquote(response.url)
+
         self.count += 1
         print self.count,title
-        sel = Selector(response=response)
         boxes = sel.xpath('//table[contains(@class,"infobox")]')
         prop_v = []
         for box in boxes:
