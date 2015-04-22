@@ -16,8 +16,9 @@ NEWSPIDER_MODULE = 'infobox_crawler.spiders'
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'infobox_crawler (+http://www.yourdomain.com)'
 
-WIKI='zhwiki'
+WIKI='enwiki'
 CONTINUE = True #是否断点续爬
+URLLIB2 = False #是否使用urllib2.Request进行爬取，scrapy自带的Request容易被封
 
 WIKI_CONFIG = {
     'enwiki':{
