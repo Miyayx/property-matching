@@ -4,14 +4,13 @@
 from models import *
 from utils import *
 
-EN_ZH_CL_FILE = '/home/keg/data/wikiraw/'
 ENWIKI_DUMP_INFOBOX = '/home/keg/data/wikiraw/enwiki-infobox-tmp.dat'
 ZHWIKI_DUMP_INFOBOX = '/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat'
 ENWIKI_CRAWL_INFOBOX = '/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
 ZHWIKI_CRAWL_INFOBOX = '/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
 
-def read_en_zh_cl(fn):
-    return [line.strip('\n').split('\t\t') for line in open(fn)]
+def read_titles(fn):
+    return [line.split('\t\t')[0] for line in open(fn)]
     
 def read_wiki_dump(infoboxes, fn):
     for line in open(fn):
@@ -93,9 +92,9 @@ def page_stat(infoboxes):
     return len(props)
 
 def main():
-    en_zh = read_en_zh_cl(EN_ZH_CL_FILE)
+    zhs = read_titles(ZHWIKI_CRAWL_INFOBOX)
     infoboxes = {}
-    for en, zh in en_zh:
+    for zh in zhs:
         infoboxes[zh] = Infobox(zh)
     read_wiki_dump(infoboxes, ZHWIKI_DUMP_INFOBOX)
     read_wiki_page(infoboxes, ZHWIKI_CRAWL_INFOBOX)
@@ -104,5 +103,8 @@ def main():
     pnum = page_stat(infoboxes)
 
     combine_prop(infoboxes)
+
+if __name__ == "__main__":
+    main()
     
         
