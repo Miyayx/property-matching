@@ -16,7 +16,7 @@ class DumpProperty:
     dump_label = ''  #dump文件中的属性名称，可能是template属性
     value = ''  #dump文件中的value值
     
-    def __init__(self, l, v):
+    def __init__(self, l, v=''):
         self.dump_label = l
         self.value = v
 

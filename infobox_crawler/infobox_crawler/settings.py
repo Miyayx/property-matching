@@ -24,12 +24,14 @@ WIKI_CONFIG = {
     'enwiki':{
         'FILE'      :'/home/keg/data/wikiraw/enwiki-infobox-tmp.dat',
         'URL_PREFIX':'http://en.wikipedia.org/wiki/',
-        'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-scrapy.dat'
+        'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-scrapy.dat',
+        'fail-404'  :'./log/enwiki-404.dat'
     },
     'zhwiki':{
         'FILE'      :'/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat',
         'URL_PREFIX':'http://zh.wikipedia.org/zh-cn/',
-        'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-scrapy.dat'
+        'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-scrapy.dat',
+        'fail-404'  :'./log/zhwiki-404.dat'
     }
 }
 

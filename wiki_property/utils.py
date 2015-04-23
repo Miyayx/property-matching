@@ -4,7 +4,7 @@
 import re, math
 from collections import Counter
 
-WORD = re.compile(r'\w+')
+WORD = re.compile(r'.')
 
 def get_cosine(vec1, vec2):
     intersection = set(vec1.keys()) & set(vec2.keys())
@@ -21,5 +21,29 @@ def get_cosine(vec1, vec2):
 
 def text_to_vector(text):
     words = WORD.findall(text)
+    #print words
+    #words = text 
     return Counter(words)
+
+def has_chinese(text):
+    zhPattern = re.compile(u'[\u4e00-\u9fa5]+')
+    match = zhPattern.search(text.decode('utf-8'))
+    return True if match else False
+
+def only_chinese(text):
+    enPattern = re.compile(u'\w+')
+    match = enPattern.search(text.decode('utf-8'))
+    return False if match else True
+
+import config
+import urllib2
+import json
+def translate_en2zh(text):
+    url = 'http://openapi.baidu.com/public/2.0/bmt/translate?client_id=%s&q=%s&from=en&to=zh'%(config.baidu_id, text)
+    try:
+        res = urllib2.urlopen(url).read()
+        j = json.loads(res)
+        return j['trans_result'][0]['dst'].encode('utf-8')
+    except:
+        return text
 

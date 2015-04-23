@@ -61,6 +61,7 @@ class InfoboxSpider(scrapy.Spider):
         #self.start_urls.append(url)
         self.fo = None
         self.fp = None
+        self.f404 = None
         self.count = 0 #
         #self.read_url()
 
@@ -70,6 +71,7 @@ class InfoboxSpider(scrapy.Spider):
         print "Infobox File:",fname
         url_prefix = configs['URL_PREFIX']
         output = configs['OUTPUT']
+        fn404 = configs['fail-404']
 
         fin = read_finished(output)
         self.count = len(fin)
@@ -78,6 +80,12 @@ class InfoboxSpider(scrapy.Spider):
             self.fo = open(output, 'a')
         else:
             self.fo = open(output, 'w')
+
+        url_404 = []
+        if os.path.isfile(fn404):
+            url_404 = [line.strip('\n') for line in open(fn404)]
+
+        self.f404 = open(fn404, 'a')
        
         fi = open(fname)
         #if settings.CONTINUE:
@@ -94,12 +102,17 @@ class InfoboxSpider(scrapy.Spider):
             if "::::" in line: #::::证明这里有infobox
                 title = line.split('\t\t')[0]
                 if not title in fin:
-                    url = os.path.join(url_prefix,title)
+                    url = os.path.join(url_prefix, title)
+                    if url in url_404:
+                        continue
                     self.start_urls.append(url)
                     if settings.URLLIB2:
                         yield self.make_requests_from_url('http://www.baidu.com', {'title': title,'no':len(self.start_urls)-1})
                     else:
-                        yield self.make_requests_from_url(url, {'title': title,'no':len(self.start_urls)-1})
+                        try:
+                            yield self.make_requests_from_url(url, {'title': title,'no':len(self.start_urls)-1})
+                        except:
+                            pass
             line = fi.readline()
         fi.close()
         print "URLs:",len(self.start_urls)
@@ -108,7 +121,11 @@ class InfoboxSpider(scrapy.Spider):
        return Request(url, callback=self.parse, dont_filter=True, meta=meta, headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36'})
 
     def parse(self, response):
+            
         no = response.meta['no']
+        if response.status == 404:
+            self.f404.write(self.start_urls[no]+'\n')
+
         title = response.meta['title']
 
         if settings.URLLIB2:
