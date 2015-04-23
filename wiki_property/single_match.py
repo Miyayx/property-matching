@@ -8,12 +8,18 @@ import os
 
 DIR = '/home/www/lmy_36mnt/data'
 
+EN_ZH_CL = os.path.join(DIR, 'wikiraw/en_zh.txt')
+
 ENWIKI_DUMP_INFOBOX = os.path.join(DIR, 'wikiraw/enwiki-infobox-tmp.dat')
 ZHWIKI_DUMP_INFOBOX = os.path.join(DIR, 'wikiraw/zhwiki-infobox-tmp.dat')
 ENWIKI_CRAWL_INFOBOX = os.path.join(DIR, 'infobox/enwiki-infobox-scrapy.dat')
 ZHWIKI_CRAWL_INFOBOX = os.path.join(DIR, 'infobox/zhwiki-infobox-scrapy.dat')
 
 ZHWIKI_OUTPUT = os.path.join(DIR,'infobox/zhwiki-infobox-matched.dat')
+ENWIKI_OUTPUT = os.path.join(DIR,'infobox/enwiki-infobox-matched.dat')
+
+def read_en_zh_cl(fn):
+    return [line.strip('\n').split('\t') for line in open(fn)]
 
 def read_titles(fn):
     return [line.split('\t\t')[0] for line in open(fn)]
@@ -69,7 +75,7 @@ def read_wiki_page(infoboxes, fn):
     print "%s Finish"%fn
     return infoboxes
 
-def combine_prop(infoboxes):
+def combine_prop(infoboxes, lan="en"):
     """
     默认一个article下的dumpproperty集合一定包含pageproperty
     即pageproperty在dumpproperty有且只有一个对应
@@ -91,7 +97,7 @@ def combine_prop(infoboxes):
                 #print 'Translate %s to %s'%(dp.value, dp.value2)
                 dp.value2 = dp.value
             if dp.value2 and len(dp.value2):
-                dp.v_vector = text_to_vector(dp.value2)
+                dp.v_vector = text_to_vector(dp.value2, lan)
 
         for pp in pps:
             matched = False
@@ -147,29 +153,40 @@ def fin_stat(infoboxes):
             props.add(dp.prop_label)
     return len(props)
 
-def main():
-    zhs = read_titles(ZHWIKI_CRAWL_INFOBOX)
+def propcess(labels, dump, crawl, output, lan="en"):
     infoboxes = {}
-    for zh in zhs:
-        infoboxes[zh] = Infobox(zh)
-    infoboxes = read_wiki_dump(infoboxes, ZHWIKI_DUMP_INFOBOX)
-    infoboxes = read_wiki_page(infoboxes, ZHWIKI_CRAWL_INFOBOX)
+    for l in labels:
+        infoboxes[l] = Infobox(l)
+    infoboxes = read_wiki_dump(infoboxes, dump)
+    infoboxes = read_wiki_page(infoboxes, crawl)
 
     dnum = dump_stat(infoboxes)
     print "Dump properties:",dnum
     pnum = page_stat(infoboxes)
     print "Page properties:",pnum
 
-    infoboxes = combine_prop(infoboxes)
+    infoboxes = combine_prop(infoboxes, lan)
 
     cnum = fin_stat(infoboxes)
     print "Combined properties:",pnum
 
-    with open(ZHWIKI_OUTPUT, 'w') as f:
+    with open(output, 'w') as f:
         for infobox in infoboxes.values():
             for p in infobox.props:
                 f.write('%s\t%s\t%s\t%s\t%s\n'%(infobox.title, p.prop_label, p.link_label, p.dump_label, p.value))
                 f.flush()
+
+def main():
+    en_zh = read_en_zh_cl(EN_ZH_CL)
+    zhs = read_titles(ZHWIKI_CRAWL_INFOBOX)
+    zhs = [zh for en,zh in en_zh if zh in zhs] #筛选一下，只对有跨语言链接的进行处理
+    print "Zh articles:",len(zhs)
+    ens = read_titles(ENWIKI_CRAWL_INFOBOX)
+    ens = [en for en,zh in en_zh if en in ens] #筛选一下，只对有跨语言链接的进行处理
+    print "En articles:",len(ens)
+
+    process(zhs, ZHWIKI_DUMP_INFOBOX, ZHWIKI_CRAWL_INFOBOX, ZHWIKI_OUTPUT, 'zh')
+    process(ens, ENWIKI_DUMP_INFOBOX, ENWIKI_CRAWL_INFOBOX, ENWIKI_OUTPUT, 'en')
 
 
 if __name__ == "__main__":

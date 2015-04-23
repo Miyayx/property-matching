@@ -4,7 +4,6 @@
 import re, math
 from collections import Counter
 
-WORD = re.compile(r'.')
 
 def get_cosine(vec1, vec2):
     intersection = set(vec1.keys()) & set(vec2.keys())
@@ -19,7 +18,10 @@ def get_cosine(vec1, vec2):
     else:
         return float(numerator) / denominator
 
-def text_to_vector(text):
+def text_to_vector(text, lan):
+    WORD = re.compile(r'.')
+    if 'en' == lan:
+        WORD = re.compile(r'\w+')
     words = WORD.findall(text)
     #print words
     #words = text 
