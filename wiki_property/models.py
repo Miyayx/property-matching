@@ -42,13 +42,19 @@ class Infobox:
 
     def __init__(self, t):
         self.title = t
-
+        self.props = []
 
 class MatchedInfobox:
 
     title = {'en':'', 'zh':''}
-    matched_props = [] 
+    m_props = [] 
     en_props = []  # Property List
     zh_props = []  # Property List
+
+    def __init__(self, en, zh):
+        self.title = {'en':en, 'zh':zh}
+        self.m_props = [] 
+        self.en_props = []  # Property List
+        self.zh_props = []  # Property List
 
 
