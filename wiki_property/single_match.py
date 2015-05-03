@@ -18,8 +18,8 @@ ZHWIKI_CRAWL_INFOBOX = os.path.join(DIR, 'infobox/zhwiki-infobox-scrapy.dat')
 ZHWIKI_OUTPUT = os.path.join(DIR,'infobox/zhwiki-infobox-matched.dat')
 ENWIKI_OUTPUT = os.path.join(DIR,'infobox/enwiki-infobox-matched.dat')
 
-def read_en_zh_cl(fn):
-    return [line.strip('\n').split('\t') for line in open(fn)]
+def read_zh_en_cl(fn):
+    return [line.strip('\n').split('\t') for line in open(fn) if len(line.split('\t')) > 1]
 
 def read_titles(fn):
     return [line.split('\t\t')[0] for line in open(fn)]
@@ -109,7 +109,7 @@ def combine_prop(infoboxes, lan="en"):
 
             if not matched: #用value相似度
                 t1 = pp.value
-                v1 = text_to_vector(t1)
+                v1 = text_to_vector(t1, lan)
                 mdp = None
                 m = 0
 
@@ -153,7 +153,7 @@ def fin_stat(infoboxes):
             props.add(dp.prop_label)
     return len(props)
 
-def propcess(labels, dump, crawl, output, lan="en"):
+def process(labels, dump, crawl, output, lan="en"):
     infoboxes = {}
     for l in labels:
         infoboxes[l] = Infobox(l)
@@ -177,16 +177,31 @@ def propcess(labels, dump, crawl, output, lan="en"):
                 f.flush()
 
 def main():
-    en_zh = read_en_zh_cl(EN_ZH_CL)
+    import time
+    s_time = time.time()
+
+    zh_en = read_zh_en_cl(EN_ZH_CL)
+    print "Crosslingual pairs:",len(zh_en)
     zhs = read_titles(ZHWIKI_CRAWL_INFOBOX)
-    zhs = [zh for en,zh in en_zh if zh in zhs] #筛选一下，只对有跨语言链接的进行处理
+    print "Crawl zh articles:",len(zhs)
+    zhs2 = [zh for zh,en in zh_en]
+    print "Crosslingual zh:",len(zhs2)
+    zhs = set(zhs)&set(zhs2) #筛选一下，只对有跨语言链接的进行处理
     print "Zh articles:",len(zhs)
+
     ens = read_titles(ENWIKI_CRAWL_INFOBOX)
-    ens = [en for en,zh in en_zh if en in ens] #筛选一下，只对有跨语言链接的进行处理
+    print "Crawl en articles:",len(ens)
+    ens2 = [en for zh,en in zh_en]
+    print "Crosslingual en:",len(ens2)
+    ens = set(ens)&set(ens2)#筛选一下，只对有跨语言链接的进行处理
     print "En articles:",len(ens)
+    del zhs2
+    del ens2
 
     process(zhs, ZHWIKI_DUMP_INFOBOX, ZHWIKI_CRAWL_INFOBOX, ZHWIKI_OUTPUT, 'zh')
     process(ens, ENWIKI_DUMP_INFOBOX, ENWIKI_CRAWL_INFOBOX, ENWIKI_OUTPUT, 'en')
+
+    print "Time Comsuming:", time.time()-s_time
 
 
 if __name__ == "__main__":
