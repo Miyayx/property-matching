@@ -17,22 +17,27 @@ NEWSPIDER_MODULE = 'infobox_crawler.spiders'
 #USER_AGENT = 'infobox_crawler (+http://www.yourdomain.com)'
 
 WIKI='enwiki'
-CONTINUE = True #是否断点续爬
+CONTINUE = False #是否断点续爬
 URLLIB2 = False #是否使用urllib2.Request进行爬取，scrapy自带的Request容易被封
+HTML = True     #是否只是获取html纯文本
 
 WIKI_CONFIG = {
     'enwiki':{
         'FILE'      :'/home/keg/data/wikiraw/enwiki-infobox-tmp.dat',
         'URL_PREFIX':'http://en.wikipedia.org/wiki/',
-        'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-scrapy.dat',
+        #'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-scrapy.dat',
+        'OUTPUT'    :'/home/keg/data/infobox/enwiki-infobox-html-scrapy.dat',
         'fail-404'  :'./log/enwiki-404.dat'
     },
     'zhwiki':{
         'FILE'      :'/home/keg/data/wikiraw/zhwiki-infobox-tmp.dat',
         'URL_PREFIX':'http://zh.wikipedia.org/zh-cn/',
-        'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-scrapy.dat',
+        #'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-scrapy.dat',
+        'OUTPUT'    :'/home/keg/data/infobox/zhwiki-infobox-html-scrapy.dat',
         'fail-404'  :'./log/zhwiki-404.dat'
     }
 }
+
+
 
 

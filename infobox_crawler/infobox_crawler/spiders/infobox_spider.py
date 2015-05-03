@@ -72,8 +72,10 @@ class InfoboxSpider(scrapy.Spider):
         url_prefix = configs['URL_PREFIX']
         output = configs['OUTPUT']
         fn404 = configs['fail-404']
-
-        fin = read_finished(output)
+        
+        fin = []
+        if os.path.isfile(output):
+            fin = read_finished(output)
         self.count = len(fin)
 
         if settings.CONTINUE: #输出文件
@@ -120,29 +122,7 @@ class InfoboxSpider(scrapy.Spider):
     def make_requests_from_url(self, url, meta):
        return Request(url, callback=self.parse, dont_filter=True, meta=meta, headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36'})
 
-    def parse(self, response):
-            
-        no = response.meta['no']
-        if response.status == 404:
-            self.f404.write(self.start_urls[no]+'\n')
-
-        title = response.meta['title']
-
-        if settings.URLLIB2:
-            #伪装为浏览器  
-            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'    
-            headers = {'User-Agent':user_agent} 
-            req = urllib2.Request(self.start_urls[no], headers=headers)  
-            response = urllib2.urlopen(req)
-            sel = Selector(text = response.read())
-        else:
-            sel = Selector(response = response)
-
-        print urllib.unquote(response.url)
-
-        self.count += 1
-        print self.count,title
-        boxes = sel.xpath('//table[contains(@class,"infobox")]')
+    def parse_infobox(self, title, boxes):
         prop_v = []
         for box in boxes:
             trs = box.css('tr')
@@ -177,5 +157,41 @@ class InfoboxSpider(scrapy.Spider):
             self.fo.write(line)
             self.fo.flush()
                     #print th_t+":",td_t
+
+    def fetch_infobox_html(self, title, boxes):
+        htmls = [b.extract().replace('\n','') for b in boxes]
+        line = "%s\t\t%s\n"%(title, "::;".join(htmls).encode('utf-8'))
+        #print line
+        if self.fo:
+            self.fo.write(line)
+            self.fo.flush()
+
+    def parse(self, response):
+            
+        no = response.meta['no']
+        if response.status == 404:
+            self.f404.write(self.start_urls[no]+'\n')
+
+        title = response.meta['title']
+
+        if settings.URLLIB2:
+            #伪装为浏览器  
+            user_agent = 'Mozilla/4.0 (compatible; MSIE 5.5; Windows NT)'    
+            headers = {'User-Agent':user_agent} 
+            req = urllib2.Request(self.start_urls[no], headers=headers)  
+            response = urllib2.urlopen(req)
+            sel = Selector(text = response.read())
+        else:
+            sel = Selector(response = response)
+
+        print urllib.unquote(response.url)
+
+        self.count += 1
+        print self.count,title
+        boxes = sel.xpath('//table[contains(@class,"infobox")]')
+        if settings.HTML:
+            self.fetch_infobox_html(title, boxes)
+        else:
+            self.parse_infobox(title, boxes)
 
 
