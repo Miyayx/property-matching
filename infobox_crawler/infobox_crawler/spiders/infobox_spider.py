@@ -15,14 +15,6 @@ import urllib2
 def read_finished(fn):
     return [line.split('\t\t')[0] for line in open(fn)]
 
-def read_lastline(fn):
-    line = ""
-    c = 0
-    for line in open(fn):
-        c += 1
-        pass
-    return line, c
-
 def parse_tr(html, Type='td'):
     """
     对infobox的cell进行处理，处理th还是td通过Type决定，两者处理机制基本一样
@@ -90,14 +82,6 @@ class InfoboxSpider(scrapy.Spider):
         self.f404 = open(fn404, 'a')
        
         fi = open(fname)
-        #if settings.CONTINUE:
-        #    ll, c = read_lastline(output) 
-        #    p = ll.split('\t\t')[0]#读取断点文本
-        #    print "BreakPoint:",p
-        #    self.count = c
-        #    line = fi.readline()
-        #    while(not line.split('\t\t')[0] == p):
-        #        line = fi.readline()
 
         line = fi.readline()
         while(line):
