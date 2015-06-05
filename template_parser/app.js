@@ -11,28 +11,28 @@ var OpenCC = require('opencc');
 var opencc = new OpenCC('t2s.json');
 
 //var page = 'Template:infobox film';
-var page = 'template:infobox comics character';
+//var page = 'template:infobox comics character';
 //var page = 'template:infobox OS';
+//var page = 'template:电视节目信息框';
+var page = 'Template:Infobox government cabinet';
 var language = 'zh';
-var fname = '/mnt/lmy_36/wikiraw/enwiki-template-name.dat'
-var fo = '/mnt/lmy_36/infobox/enwiki-template-triple.dat'
-
-//new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-//	get_template_labels(line.toString(), language);
-//});
-//
+var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
+var fo = '/mnt/lmy_36/infobox/zhnwiki-template-triple.dat'
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
     if(str.match(r) !== null){
         var start = str.indexOf(reg);
-        return str.substring(start+reg.length, str.indexOf(';', start));
+        if (str.indexOf(';',start) > -1)
+            return str.substring(start+reg.length, str.indexOf(';', start));
+        else
+            return str.substring(start+reg.length,str.length);
     } else
         return str;
 }
 
 var clean_text = function(text){
-    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('<br>','').replace(/^\//,'').replace('/^[;:]|[;:]$/');
+    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('&ensp;','').replace('<br>',' ').replace(/^\//,'').replace('|','').replace('：','').replace('/^[;:]|[;:]$/','').replace('<br />',' ').replace("'''",'');
 }
 
 
@@ -41,7 +41,7 @@ var get_template_labels = function(page, language) {
 	infobox(page, language, function(err, data) {
 		if (err) {
 			// Oh no! Something goes wrong!
-			console.log(err)
+			//console.log(err)
 			return;
 		}
 
@@ -53,28 +53,45 @@ var get_template_labels = function(page, language) {
 				// 分析label
 				var o = data[key];
 				if (o.type == 'text') { //如果是文本
-                    o.value = o.value.replace('<includeonly>', '').replace('</includeonly>','').replace('{{#if:','');
-					if (o.value.indexOf('{{nowrap|') > - 1){ 
-                    var s = o.value.indexOf('{{nowrap|');
-                    label = o.value.substring(s+'{{nowrap'.length, o.value.indexOf('}}', s));
+                    label = o.value
+                    //console.log(label);
+                    label = label.replace('<includeonly>', '').replace('</includeonly>','').replace('{{#if:','');
+                    //console.log(label);
+					if (label.indexOf('{{nowrap|') > - 1){ //{{nowrap|港澳}}
+                    var s = label.indexOf('{{nowrap|');
+                    content = label.substring(s, label.indexOf('}}', s)+2);
+                    replace = label.substring(s+'{{nowrap|'.length, label.indexOf('}}', s));
+                    label = label.replace(content, replace);
+                    } 
+					if (label.indexOf('{{Nowrap|') > - 1){ //{{Nowrap|位置}}
+                    var s = label.indexOf('{{Nowrap|');
+                    content = label.substring(s, label.indexOf('}}', s)+2);
+                    replace = label.substring(s+'{{Nowrap|'.length, label.indexOf('}}', s));
+                    label = label.replace(content, replace);
+                    } 
+					if (label.indexOf('{{nobold|') > - 1){ //离职成员数量<br />{{nobold|（死亡／辞职／解除职务）}}
+                    var s = label.indexOf('{{nobold|');
+                    content = label.substring(s, label.indexOf('}}', s)+2);
+                    replace = label.substring(s+'{{nobold|'.length, label.indexOf('}}', s));
+                    label = label.replace(content, replace);
+                    } 
+                    //console.log(label);
+                    if(label.match(/-{.+}-/)){//执行-{zh-hans:制作;zh-hant:製作;zh-cn:制片;}-}}
+                        label = label.match(/-{.+}-/)[0].substring(2, label.length-2);
                     }
-                    else if(o.value.match(/{{{.+}}}/) !== null){ //{{{chrtitle|主席}}} {{{magazine<includeonly>|</includeonly>}}}
-                        var labels = o.value.match(/{{{.+}}}/)[0].split('|');
+                    //console.log(label);
+                    label = find_zh_cn(label, 'zh-hans:');
+                    label = find_zh_cn(label, 'zh-cn:');
+                    //console.log(label);
+                    if(label.match(/{{{.+?}}}/) !== null){ //{{{chrtitle|主席}}} {{{magazine<includeonly>|</includeonly>}}}
+                        var labels = label.match(/{{{.+?}}}/)[0].replace(/{/g,'').replace(/}/g,'').split('|');
                         if (labels.length == 1)
                             label = labels[0];
                         else if (labels[1].length > 0)
                             label = labels[1];
                         else
                             label = labels[0];
-					    label = label.replace(/}/g, '').replace(/{/g, '').trim();
-                    }else if(o.value.match(/-{.+}-/)){
-                        var m = o.value.match(/-{.+}-/);
-                        label = o.value.substring(0, o.value.indexOf('-{')) + m[0].substring(8, m[0].length);
-                        label = find_zh_cn(label, 'zh-hans:');
-                        label = find_zh_cn(label, 'zh-cn:');
-                    }
-					else {
-                    label = o.value;
+					    //label = label.replace(/}/g, '').replace(/{/g, '').trim();
                     }
 				}
 				else if (o.type == 'link') { //如果是link
@@ -122,7 +139,7 @@ var get_template_labels = function(page, language) {
 					var k = 'data' + n
 					var oo = data[k];
 					if (oo && oo.value) { //还有date2的情况，忽律
-						var m = oo.value.match(/{{{.+}}}/);
+						var m = oo.value.match(/{{{.+?}}}/);
 						var value = '';
 						if (m !== null) {
 							value = m[0]
@@ -154,4 +171,8 @@ var get_template_labels = function(page, language) {
 
 }
 
-get_template_labels(page, language);
+new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+	get_template_labels(line.toString(), language);
+});
+
+//get_template_labels(page, language);
