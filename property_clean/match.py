@@ -8,6 +8,8 @@ import re
 import os
 import codecs
 
+from prop_io import *
+
 DIR = "/home/xlore/XloreData/etc/ttl/"
 PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl4")
 INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl4")
@@ -19,6 +21,10 @@ ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "zhwiki-template-triple.dat")
 ENWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "enwiki-template-triple.dat") 
 
 def read_template_label(fn):
+    """
+    Returns:
+        k: template label v:display label
+    """
     labels = {}
     for line in codecs.open(fn,'r','utf-8'):
         k,v = line.split('\t')[:2]
@@ -28,23 +34,24 @@ def read_template_label(fn):
         labels[k] = v
     return labels
 
-def read_and_write(fn, ofn, en_labels, zh_labels ):
-    re_count = 0 
-    fw = codecs.open(ofn, 'w', 'utf-8')
-    with codecs.open(fn,'r', 'utf-8') as f:
-        for line in f:
-            if line.startswith('<') and 'rdfs:label' in line:
-                l = line[line.index('"')+1: line.rindex('"')]
-                if "@en" in line:
-                    if l in en_labels:
-                        re_count += 1
-                        line = line.replace(l, en_labels[l])
-                if "@zh" in line:
-                    if l in zh_labels:
-                        re_count += 1
-                        line = line.replace(l, zh_labels[l])
-            fw.write(line)
-            fw.flush()
-    fw.close()
-    print "Replace num:%d"%(re_count)
+def merge_by_template_label():
+    zh_temp_label = read_template_label(ZHWIKI_TEMPLATE_LABEL)
+    en_temp_label = read_template_label(ENWIKI_TEMPLATE_LABEL)
+    label_uri = read_label_uri(PROPERTY_LIST_TTL)
+    uri_labels = read_uri_labels(PROPERTY_LIST_TTL)
+    for tl, dl in zh_temp_label.items():
+        if tl in label_uri:
+            u = label_uri[tl]
+        uri_labels[uri]['zh'] = dl
+    for tl, dl in en_temp_label.items():
+        if tl in label_uri:
+            u = label_uri[tl]
+        uri_labels[uri]['en'] = dl
+    write_new_property_list(O_PROPERTY_LIST_TTL, uri_labels)
+
+def merge_by_matched_pair():
+    pass
+
+if __name__ == "__main__":
+    merge_by_template_label()
 
