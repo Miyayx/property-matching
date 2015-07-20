@@ -1,0 +1,11 @@
+{
+    "name": "template_parser",
+        "version": "0.1.0",
+        "description": "",
+        "author": "Miyayx",
+        "dependencies": {
+            "socks5-http-client": "1.x.x",
+            "lazy": "1.x.x",
+            "opencc": "1.x.x"
+        }
+}
