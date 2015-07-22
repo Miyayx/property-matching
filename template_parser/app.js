@@ -1,6 +1,6 @@
 /*
 * 这部分代码负责爬取对应template-name的template label
-* 没有写入文件的操作，输出是通过node app.js > result_fname 这样的重定向操作实现的，注意隐藏多于的log
+* 没有写入文件的操作，输出是通过node app.js > result_fname 这样的重定向操作实现的，注意隐藏多余的log
 * 爬取wiki数据需要sshtunnel类型的翻墙，在node_modules/wiki-infobox/index.js中修改proxy地址与端口
 * 
 */
@@ -17,11 +17,12 @@ try{
 //var page = 'Template:infobox film';
 //var page = 'template:infobox comics character';
 //var page = 'template:infobox OS';
-//var page = 'template:电视节目信息框';
-var page = 'Template:Infobox government cabinet';
+var page = 'template:电视节目信息框';
+//var page = 'Template:Infobox government cabinet';
 var language = 'zh';
-var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
-var fo = '/mnt/lmy_36/infobox/zhwiki-template-triple.dat'
+//var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
+var fname = '../data/template.cl.zhwiki';
+//var fo = '/mnt/lmy_36/infobox/zhwiki-template-triple.dat'
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
@@ -45,11 +46,11 @@ var get_template_labels = function(page, language) {
     infobox(page, language, function(err, data) {
         if (err) {
             // Oh no! Something goes wrong!
-            //console.log(err)
+            console.log(err)
             return;
         }
 
-        console.log(data);
+        //console.log(data);
         Object.keys(data).forEach(function(key) {
             var match = key.match(/^label\d+$/);
             if (match !== null) {
@@ -176,8 +177,8 @@ var get_template_labels = function(page, language) {
 
 }
 
-new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-    get_template_labels(line.toString(), language);
-});
+//new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+//    get_template_labels(line.toString(), language);
+//});
 
-//get_template_labels(page, language);
+get_template_labels(page, language);
