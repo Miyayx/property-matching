@@ -22,7 +22,7 @@ var page = 'Template:infobox film';
 var language = 'en';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
 var fname = '../data/template.enwiki';
-var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
+var fo = '/Users/Shared/server36/infobox/enwiki-template-triple.dat'
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
@@ -181,22 +181,33 @@ var get_template_labels = function(page, language) {
 var flag = '';
 fs.exists(fo, function(exists) { 
     if (exists) { 
+        //console.log(fo+" exists");
         new lazy(fs.createReadStream(fo))
-        .lines
-        .forEach(function(line){
-            flag = line.trim().split('\t')[0]; //作为断点的那个template
-        }
-        );
+        .on('end', function() { 
+            flag = flag.trim().split('\t')[0]; //作为断点的那个template
+            //console.log("flag="+flag);
+
+            var breakpoint = flag.length > 0 ? false: true;
+
+            new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+                if (line.toString().trim() == flag){ //找到断点就设为true，之后的line都会被处理
+                    breakpoint = true;
+                    //console.log('breakpoiont = true')
+                }
+                if(breakpoint)
+                    get_template_labels(line.toString(), language);
+            });
+        } )
+        .lines.forEach(function(line){
+            flag = line.toString(); //作为断点的那个template
+        });
+
+    }else{
+        new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+            get_template_labels(line.toString(), language);
+        });
     }
 }); 
 
-var breakpoint = flag.length > 0 ? false: true;
-
-new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-    if (line.toString().trim() == flag) //找到断点就设为true，之后的line都会被处理
-        breakpoint = true;
-    if(breakpoint)
-        get_template_labels(line.toString(), language);
-});
 
 //get_template_labels(page, language);
