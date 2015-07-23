@@ -14,15 +14,15 @@ try{
 } catch(err){
 }
 
-//var page = 'Template:infobox film';
+var page = 'Template:infobox film';
 //var page = 'template:infobox comics character';
 //var page = 'template:infobox OS';
-var page = 'template:电视节目信息框';
+//var page = 'template:电视节目信息框';
 //var page = 'Template:Infobox government cabinet';
-var language = 'zh';
+var language = 'en';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
-var fname = '../data/template.cl.zhwiki';
-//var fo = '/mnt/lmy_36/infobox/zhwiki-template-triple.dat'
+var fname = '../data/template.enwiki';
+var fo = '/User/Shared/infobox/enwiki-template-triple.dat'
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
@@ -37,7 +37,7 @@ var find_zh_cn = function(str, reg){
 }
 
 var clean_text = function(text){
-    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('&ensp;','').replace('<br>',' ').replace(/^\//,'').replace('|','').replace('：','').replace('/^[;:]|[;:]$/','').replace('<br />',' ').replace("'''",'');
+    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('&ensp;','').replace('<br>',' ').replace(/^\//,'').replace('|','').replace('：','').replace('/^[;:]|[;:]$/','').replace('<br />',' ').replace("'''",'').replace('}','');
 }
 
 
@@ -160,9 +160,10 @@ var get_template_labels = function(page, language) {
 
                 if (label.length > 0 && dl.length > 0) {
                     dl = clean_text(dl);
-                    zhdl = clean_text(dl);
+                    zhdl = clean_text(zhdl);
                     label = clean_text(label);
-                    var str = dl + '(' + page + ')' + '\t' + label + '\t' + zhdl
+                    //var str = dl + '(' + page + ')' + '\t' + label + '\t' + zhdl
+                    var str = page + '\t' + dl + '\t' + zhdl + '\t' + label
                     if(opencc)
                         str = opencc.convertSync(str); //繁简体转换
                     res += (str + '\n');
@@ -177,8 +178,26 @@ var get_template_labels = function(page, language) {
 
 }
 
-//new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-//    get_template_labels(line.toString(), language);
-//});
+var path = require('path'); 
+var flag = '';
+path.exists(fo, function(exists) { 
+    if (exists) { 
+        new lazy(fs.createReadStream(fo))
+        .lines
+        .forEach(function(line){
+            flag = line.trim().split('\t')[0]; //作为断点的那个template
+        }
+        );
+    } 
+}); 
 
-get_template_labels(page, language);
+var breakpoint = flag.length > 0 ? false: true;
+
+new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+    if (line.toString.trim() == flag) //找到断点就设为true，之后的line都会被处理
+        breakpoint = true;
+    if(breakpoint)
+        get_template_labels(line.toString(), language);
+});
+
+//get_template_labels(page, language);
