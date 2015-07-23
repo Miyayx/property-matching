@@ -19,10 +19,12 @@ var page = 'Template:infobox film';
 //var page = 'template:infobox OS';
 //var page = 'template:电视节目信息框';
 //var page = 'Template:Infobox government cabinet';
-var language = 'en';
+var language = 'zh';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
-var fname = '../data/template.enwiki';
-var fo = '/Users/Shared/server36/infobox/enwiki-template-triple.dat'
+//var fname = '../data/template.zhwiki';
+var fname = '../data/xab';
+//var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
+var fo = '../data/zhwiki-template-triple.dat'
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
