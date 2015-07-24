@@ -22,7 +22,8 @@ var page = 'Template:infobox film';
 var language = 'zh';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
 //var fname = '../data/template.zhwiki';
-var fname = '../data/xab';
+var fname = process.argv[2] ? process.argv[2]:'../data/xg'  ;
+//console.log('fname:'+fname);
 //var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
 var fo = '../data/zhwiki-template-triple.dat'
 
@@ -180,6 +181,7 @@ var get_template_labels = function(page, language) {
 
 }
 
+
 var flag = '';
 fs.exists(fo, function(exists) { 
     if (exists) { 
@@ -207,7 +209,7 @@ fs.exists(fo, function(exists) {
     }else{
         new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
             get_template_labels(line.toString(), language);
-        });
+      });
     }
 }); 
 
