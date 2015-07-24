@@ -22,10 +22,14 @@ var page = 'Template:infobox film';
 var language = 'zh';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
 //var fname = '../data/template.zhwiki';
-var fname = process.argv[2] ? process.argv[2]:'../data/xg'  ;
+var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
 //console.log('fname:'+fname);
 //var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
 var fo = '../data/zhwiki-template-triple.dat'
+
+String.prototype.replaceAll = function(s1,s2){
+　　return this.replace(new RegExp(s1,"gm"),s2);
+　　}
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
@@ -40,7 +44,7 @@ var find_zh_cn = function(str, reg){
 }
 
 var clean_text = function(text){
-    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('&ensp;','').replace('<br>',' ').replace(/^\//,'').replace('|','').replace('：','').replace('/^[;:]|[;:]$/','').replace('<br />',' ').replace("'''",'').replace('}','');
+    return text.replace('<includeonly>','').replaceAll('&nbsp;',' ').replace('&ensp;','').replaceAll('<br>',' ').replace(/^\//,'').replace('：','').replace('/^[;:]|[;:]$/','').replaceAll('<br/>',' ').replaceAll("'''",'').replaceAll('Full-ZH-name','').replaceAll('{{{type}}}','').replaceAll('{{{nowrap}}}','').replace('{{#if:{{{discontinued','');
 }
 
 
