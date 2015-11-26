@@ -1,2 +1,3 @@
 ENV/
 *.pyc
+template_parser/node_modules
