@@ -145,8 +145,9 @@ all_matched = {}
 
 find_matched_1()
 print "Matched templates with different label:",len(matched_tem)
+print "ALL Matched properties:",len(all_matched)
 find_matched_2()
+print "ALL Matched properties:",len(all_matched)
 #find_matched_3()
 #find_matched_4()
 merge()
-print "ALL Matched properties:",len(all_matched)
