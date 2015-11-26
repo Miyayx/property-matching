@@ -14,15 +14,22 @@ try{
 } catch(err){
 }
 
-//var page = 'Template:infobox film';
+var page = 'Template:infobox film';
 //var page = 'template:infobox comics character';
 //var page = 'template:infobox OS';
-var page = 'template:电视节目信息框';
+//var page = 'template:电视节目信息框';
 //var page = 'Template:Infobox government cabinet';
 var language = 'zh';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
-var fname = '../data/template.cl.zhwiki';
-//var fo = '/mnt/lmy_36/infobox/zhwiki-template-triple.dat'
+//var fname = '../data/template.zhwiki';
+var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
+//console.log('fname:'+fname);
+//var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
+var fo = '../data/zhwiki-template-triple.dat'
+
+String.prototype.replaceAll = function(s1,s2){
+　　return this.replace(new RegExp(s1,"gm"),s2);
+　　}
 
 var find_zh_cn = function(str, reg){
     var r = new RegExp(reg, "g");
@@ -37,7 +44,7 @@ var find_zh_cn = function(str, reg){
 }
 
 var clean_text = function(text){
-    return text.replace('<includeonly>','').replace('&nbsp;',' ').replace('&ensp;','').replace('<br>',' ').replace(/^\//,'').replace('|','').replace('：','').replace('/^[;:]|[;:]$/','').replace('<br />',' ').replace("'''",'');
+    return text.replace('<includeonly>','').replaceAll('&nbsp;',' ').replace('&ensp;','').replaceAll('<br>',' ').replace(/^\//,'').replace('：','').replace('/^[;:]|[;:]$/','').replaceAll('<br/>',' ').replaceAll("'''",'').replaceAll('Full-ZH-name','').replaceAll('{{{type}}}','').replaceAll('{{{nowrap}}}','').replace('{{#if:{{{discontinued','');
 }
 
 
@@ -46,7 +53,7 @@ var get_template_labels = function(page, language) {
     infobox(page, language, function(err, data) {
         if (err) {
             // Oh no! Something goes wrong!
-            console.log(err)
+            //console.log(err)
             return;
         }
 
@@ -160,9 +167,10 @@ var get_template_labels = function(page, language) {
 
                 if (label.length > 0 && dl.length > 0) {
                     dl = clean_text(dl);
-                    zhdl = clean_text(dl);
+                    zhdl = clean_text(zhdl);
                     label = clean_text(label);
-                    var str = dl + '(' + page + ')' + '\t' + label + '\t' + zhdl
+                    //var str = dl + '(' + page + ')' + '\t' + label + '\t' + zhdl
+                    var str = page + '\t' + dl + '\t' + zhdl + '\t' + label
                     if(opencc)
                         str = opencc.convertSync(str); //繁简体转换
                     res += (str + '\n');
@@ -177,8 +185,37 @@ var get_template_labels = function(page, language) {
 
 }
 
-//new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-//    get_template_labels(line.toString(), language);
-//});
 
-get_template_labels(page, language);
+var flag = '';
+fs.exists(fo, function(exists) { 
+    if (exists) { 
+        //console.log(fo+" exists");
+        new lazy(fs.createReadStream(fo))
+        .on('end', function() { 
+            flag = flag.trim().split('\t')[0]; //作为断点的那个template
+            //console.log("flag="+flag);
+
+            var breakpoint = flag.length > 0 ? false: true;
+
+            new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+                if (line.toString().trim() == flag){ //找到断点就设为true，之后的line都会被处理
+                    breakpoint = true;
+                    //console.log('breakpoiont = true')
+                }
+                if(breakpoint)
+                    get_template_labels(line.toString(), language);
+            });
+        } )
+        .lines.forEach(function(line){
+            flag = line.toString(); //作为断点的那个template
+        });
+
+    }else{
+        new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+            get_template_labels(line.toString(), language);
+      });
+    }
+}); 
+
+
+//get_template_labels(page, language);
