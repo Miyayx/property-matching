@@ -33,6 +33,9 @@ def load_infoboxes(fn):
     return infoboxes
 
 def add_vector(box):
+    """
+    Add text vector of value to an infobox for futher similarity calculation in loop
+    """
     for ep in box.props:
         value2 = None
         ep.v_vector = None
@@ -55,20 +58,20 @@ def cl_match(enbox, zhbox):
     zhbox = add_vector(zhbox)
 
     for ep in enbox.props:
-        if ep.matched: continue
+        if ep.matched: continue #已经有匹配了就不做处理了
         for zp in zhbox.props:
             if zp.matched: continue
-            if ep.dump_label == zp.dump_label:
+            if ep.dump_label == zp.dump_label: #template label相同
                 mbox.m_props.append((ep.prop_label, zp.prop_label))
                 ep.matched = True
                 zp.matched = True
                 break
-            elif is_matched(ep.link_label, zp.link_label):
+            elif is_matched(ep.link_label, zp.link_label): #链接同一个跨语言实例
                 mbox.m_props.append((ep.prop_label, zp.prop_label))
                 ep.matched = True
                 zp.matched = True
                 break
-            elif ep.v_vector and zp.v_vector:
+            elif ep.v_vector and zp.v_vector: #value相似度比较高
                 cosine = get_cosine(ep.v_vector, zp.v_vector)
                 if cosine > SIM:
                     mbox.m_props.append((ep.prop_label, zp.prop_label))
@@ -78,6 +81,9 @@ def cl_match(enbox, zhbox):
     return mbox
 
 def prop_stat(boxes):
+    """
+    统计
+    """
     en_set = set()
     zh_set = set()
     cl_set = set()
@@ -101,8 +107,9 @@ def main():
     print len(zhboxes),"zhboxes"
     zh_en = read_zh_en_cl(EN_ZH_CL)
     global en_zh_map
-    en_zh_map = dict((en,zh) for zh,en in zh_en)
+    en_zh_map = dict((en,zh) for zh,en in zh_en)# zh和en label的hashmap，方便后面查找一个中英文对是否match
 
+    # 只保留有infobox的跨语言链接对
     zh_en = [ i for i in zh_en if i[0] in zhboxes]
     zh_en = [ i for i in zh_en if i[1] in enboxes]
     print "",len(zh_en)
@@ -110,7 +117,7 @@ def main():
     boxes = []
     for i in xrange(len(zh_en[:])):
         print i
-        zh, en = zh_en[i]
+        zh, en = zh_en[i] #对每一对跨语言链接instance，对齐其中的infobox属性
         box = cl_match(enboxes[en], zhboxes[zh])
         boxes.append(box)
 
