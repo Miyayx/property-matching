@@ -1,36 +1,83 @@
-
 # -*- coding:utf-8 -*-
 
 import re
 import os
 import codecs
 
-DIR = "/home/xlore/XloreData/etc/ttl/"
+"""
+删除只有一个或没有instance/concept的concept
+"""
+
+#DIR = "/home/xlore/XloreData/etc/ttl/"
+DIR = "/home/xlore/server36/ttl/"
 CONCEPT_LIST_TTL = os.path.join(DIR, "xlore.concept.list.ttl")
 TAXONOMY_TTL = os.path.join(DIR, "xlore.taxonomy.ttl")
 O_CONCEPT_LIST_TTL = os.path.join(DIR, "xlore.concept.list.ttl2")
 O_TAXONOMY_TTL = os.path.join(DIR, "xlore.taxonomy.ttl2")
 
-def concept_stat(fn):
+
+def concept_stat(fn, confn):
+    #<http://xlore.org/instance/1422347> <http://xlore.org/property#isRelatedTo> <http://xlore.org/concept/4563> .
+    #<http://xlore.org/instance/6480808> owl:InstanceOf <http://xlore.org/concept/9276> .
     s = set()
     multis = set()
+    has_zero = set()
     with open(fn) as f:
         for line in f:
-            if line.startswith('<') and 'xlore.org/concept/' in line and 'xlore.org/instance/':
-                con, ins = line.strip('\n').split(' ',1)
-                c = con.split('/')[-1] 
+            if line.startswith('<') and not 'rdf' in line:
+                sub, rel, sup = line.strip('\n').split()[:3]
+                c = sup[1:-1].split('/')[-1] 
                 if c in s:
                     multis.add(c)
                 else:
                     s.add(c)
-    return s - multis 
 
+    for line in open(confn):
+        if line.startswith('<'):
+            _id = line[1:line.index('>')]
+            #if _id in s:
+            #    print "_id",_id
+            if not _id in s:
+                has_zero.add(_id)
+    print "Total:",len(s)
+    print "Multi:",len(multis)
+    print "Has one:",len(s-multis)
+    #for o in s-multis:
+    #    print "ones",o
+    print "Has Zero:",len(has_zero)
+    #for z in has_zero:
+    #    print "zero:",z
+    return (s - multis)^has_zero
+
+def concept_not_in_taxonomy(fn, confn):
+    s = set()
+    not_in = set()
+    with open(fn) as f:
+        for line in f:
+            if line.startswith('<') and not 'rdf' in line:
+                sub, rel, sup = line.strip('\n').split()[:3]
+                c = sup[1:-1].split('/')[-1] 
+                s.add(c)
+                if "concept" in sub:
+                    c2 = sub[1:-1].split('/')[-1] 
+                    s.add(c2)
+
+    for line in open(confn):
+        if line.startswith('<'):
+            _id = line[1:line.index('>')]
+            #if _id in s:
+            #    print "_id",_id
+            if not _id in s:
+                not_in.add(_id)
+    print "Total:",len(s)
+    print "Not in",len(not_in)
+    return not_in
 
 def read_and_write(fn, ofn, del_uris):
     fw = codecs.open(ofn, 'w', 'utf-8')
     with codecs.open(fn,'r', 'utf-8') as f:
         for line in f:
-            if line.startswith('<') and 'rdfs:label' in line:
+            if line.startswith('<'):
                 _id = line[1:line.index('>')]
                 if _id in del_uris:
                     continue
@@ -43,12 +90,12 @@ def taxonomy_read_and_write2(fn, ofn, del_uris):
     with codecs.open(fn, 'r', 'utf-8') as f:
         for line in f:
             if line.startswith('<') and 'xlore.org/concept/' in line:
-                sup, sub = line.split(' ',1)
-                _id = sup.split('/')[-1]
+                sub, rel, sup = line.split()[:3]
+                _id = sup[1:-1].split('/')[-1] 
                 if _id in del_uris:
                     continue
                 if 'concept' in sub:
-                    _id = sub.split('/')[-1]
+                    _id = sub[1:-1].split('/')[-1] 
                     if _id in del_uris:
                         continue
             fw.write(line)
@@ -56,7 +103,13 @@ def taxonomy_read_and_write2(fn, ofn, del_uris):
     fw.close()
 
 if __name__ == "__main__":
-    dels = concept_stat(TAXONOMY_TTL)
-    read_and_write(CONCEPT_LIST_TTL, O_CONCEPT_LIST_TTL, dels)
-    taxonomy_read_and_write2(TAXONOMY_TTL, O_TAXONOMY_TTL, dels)
+    ### 删除没有或只有一个instance/concept 的concept
+    #dels = concept_stat(TAXONOMY_TTL, CONCEPT_LIST_TTL)
+    #print "Delete %d concepts"%(len(dels))
+    #read_and_write(CONCEPT_LIST_TTL, O_CONCEPT_LIST_TTL, dels)
+    #taxonomy_read_and_write2(TAXONOMY_TTL, O_TAXONOMY_TTL, dels)
+
+    ### 只删除未在taxonomy中出现的
+    dels = concept_not_in_taxonomy(TAXONOMY_TTL, CONCEPT_LIST_TTL)
+    print "Delete %d concepts"%(len(dels))
 

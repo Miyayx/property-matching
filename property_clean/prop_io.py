@@ -1,4 +1,3 @@
-
 # -*- coding:utf-8 -*-
 
 import re
@@ -35,7 +34,13 @@ def write_new_property_list(fn, uri_labels):
     with codecs.open(fn,'w', 'utf-8') as f:
         #<7> rdf:type rdf:Property .
         #<13> rdfs:label "外文名"@zh .
-        for u, ls in sorted(uri_labels):
+
+        f.write("@base <http://xlore.org/property/> .\n")
+        f.write("@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .\n")
+        f.write("@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .\n\n")
+        uri_labels = dict((int(k),v) for k, v in uri_labels.items())
+        for u in sorted(uri_labels):
+            ls = uri_labels[u]
             f.write("<%s> rdf:type rdf:Property .\n"%str(u))
             if "en" in ls:
                 f.write('<%s> rdfs:label "%s"@en .\n'%(str(u), ls["en"]))
@@ -56,4 +61,14 @@ def infobox_read_and_write(fn, ofn, del_uris):
             fw.flush()
     fw.close()
 
-
+def read_and_del(fn, ofn, del_uris):
+    fw = codecs.open(ofn, 'w', 'utf-8')
+    with codecs.open(fn,'r', 'utf-8') as f:
+        for line in f:
+            if line.startswith('<'):
+                _id = line[1:line.index('>')]
+                if _id in del_uris:
+                    continue
+            fw.write(line)
+            fw.flush()
+    fw.close()
