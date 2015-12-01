@@ -125,7 +125,7 @@ def merge():
     """
     fw = open(MATCHED_TEMPLATE_LABEL_ALL, 'w')
     for en, zh in all_matched.iteritems():
-        fw.write(en+'\t'+zh)
+        fw.write(en+'\t'+zh+'\n')
     fw.close()
         
     
