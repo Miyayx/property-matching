@@ -9,11 +9,13 @@ import re
 import os
 import codecs
 
+from prop_io import *
+
 DIR = "/home/xlore/XloreData/etc/ttl/"
-PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl3")
-INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl3")
-O_PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl4")
-O_INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl4")
+PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl5")
+INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl4")
+O_PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl6")
+O_INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl6")
 
 def read_label_uri2(fn, uri_labels):
     label_uri = {}
@@ -23,7 +25,7 @@ def read_label_uri2(fn, uri_labels):
                 _id = line[1:line.index('>')]
                 l = line[line.index('"')+1: line.rindex('"')]
                 if l in label_uri:
-                    if len(uri_labels[_id] == 2):#有双语的id优先
+                    if len(uri_labels[_id]) == 2:#有双语的id优先
                         label_uri[l] = _id
                 else:
                     label_uri[l] = _id
@@ -52,7 +54,7 @@ def read_and_write(fn, ofn, label_uri):
 if __name__=="__main__":
     uri_labels = read_uri_labels(PROPERTY_LIST_TTL)
     print "Reading label_uri"
-    label_uri = read_label_uri2(PROPERTY_LIST_TTL)
+    label_uri = read_label_uri2(PROPERTY_LIST_TTL, uri_labels)
     print "Reading and rewriting property list"
     del_uri = read_and_write(PROPERTY_LIST_TTL, O_PROPERTY_LIST_TTL, label_uri)
     print "Reading and rewriting infobox"

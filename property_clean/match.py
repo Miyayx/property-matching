@@ -16,9 +16,9 @@ INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl4")
 O_PROPERTY_LIST_TTL = os.path.join(DIR, "xlore.property.list.ttl5")
 O_INFOBOX_TTL = os.path.join(DIR, "xlore.instance.infobox.ttl5")
 
-DIR2 = "/home/xlore/XloreData/etc/ttl/"
-ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "zhwiki-template-triple.dat") 
-ENWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "enwiki-template-triple.dat") 
+DIR2 = "/home/xlore/server36/infobox"
+ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "zhwiki-template-triple2.dat") 
+ENWIKI_TEMPLATE_LABEL = os.path.join(DIR2, "enwiki-template-triple2.dat") 
 
 def read_template_label(fn):
     """
@@ -28,10 +28,16 @@ def read_template_label(fn):
     labels = {}
     for line in codecs.open(fn,'r','utf-8'):
         k,v = line.split('\t')[:2]
-        k = k[0:k.index('(')]
-        if k in labels:
-            print k
-        labels[k] = v
+        #print v
+        m = re.match('\[\[.*\]\]',v)
+        if m:
+            print v
+            v = v.replace(m.group(0), m.group(0)[2:-2].split('|')[0])
+            print v
+        k1 = k[0:k.index('(')]
+        #if k1 in labels:
+        #    print k, k1, labels[k1], v 
+        labels[k1] = v
     return labels
 
 def merge_by_template_label():
@@ -42,11 +48,11 @@ def merge_by_template_label():
     for tl, dl in zh_temp_label.items():
         if tl in label_uri:
             u = label_uri[tl]
-        uri_labels[uri]['zh'] = dl
+            uri_labels[u]['zh'] = dl
     for tl, dl in en_temp_label.items():
         if tl in label_uri:
             u = label_uri[tl]
-        uri_labels[uri]['en'] = dl
+            uri_labels[u]['en'] = dl
     write_new_property_list(O_PROPERTY_LIST_TTL, uri_labels)
 
 def merge_by_matched_pair():
