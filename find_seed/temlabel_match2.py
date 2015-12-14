@@ -12,8 +12,8 @@ Find matched properties in Wikipedia
 """
 
 DIR = "/home/keg/data/infobox"
-ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "enwiki-template-triple.dat.uniq")
-ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "zhwiki-template-triple.dat.uniq")
+ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-enwiki-template-triple.dat.uniq")
+ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-zhwiki-template-triple.dat.uniq")
 MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "matched-template-label-2-1.dat")
 MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "matched-template-label-2-2.dat")
 MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "matched-template-label-2-3.dat")
