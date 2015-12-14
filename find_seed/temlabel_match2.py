@@ -11,7 +11,8 @@ Find matched properties in Wikipedia
 4. cross-instance下value相同的
 """
 
-DIR = "/home/keg/data/infobox"
+#DIR = "/home/keg/data/infobox"
+DIR = "/home/xlore/server36/infobox"
 ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-enwiki-template-triple.dat.uniq")
 ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-zhwiki-template-triple.dat.uniq")
 MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "matched-template-label-2-1.dat")
@@ -20,13 +21,9 @@ MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "matched-template-label-2-3.dat")
 MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "matched-template-label-2-4.dat")
 MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "matched-template-label-all-2.dat")
 MATCHED_TEMPLATE = os.path.join(DIR, "template.cl")
-MATCHED_INSTANCE = ""
-ENWIKI_INFOBOX = ""
-ZHWIKI_INFOBOX = ""
-
-class TempalteAttribute:
-    def __init__():
-        pass
+MATCHED_INSTANCE = os.path.join(DIR, "enwiki.zh.en.title.cl")
+ENWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/enwiki-infobox-new.dat"
+ZHWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/zhwiki-infobox-new.dat"
 
 def read_properties(fn):
     d = {}
@@ -43,17 +40,20 @@ def read_infoboxes(fn, matched_ins):
     d = {}
     d2 = {}
     for line in open(fn):
+        if not '\t\t' in line:
+            continue
         title, info = line.strip('\n').split('\t\t')
+        info = info.split('\t')[0]
         if not title in matched_ins: #没有crosslingual的instance就不要了
             continue
-        tem, infobox = info.split(':::::')
+        tem, infobox = info.split(':::::',1)
         tem = 'template:'+tem
         
         d[title] = {}
         d2[title] = tem
         for kv in infobox.split('::::;'):
-            k, v = kv.split(':::::')
-            d[(title, tem)][k] = v
+            k, v = kv.split('::::=')
+            d[title][k] = v
     return d, d2
 
 def find_matched_1():
@@ -102,8 +102,10 @@ def find_matched_3():
             tem_zh = zhwiki_infobox_tem[ins_zh]
             if tem_en == tem_zh:
                 continue
-            tem_en = enwiki_tem_label[tem_en]
-            tem_zh = zhwiki_tem_label[tem_zh]
+            if not tem_en in case_enwiki_tem_label or not tem_zh in case_zhwiki_tem_label:
+                continue
+            tem_en = case_enwiki_tem_label[tem_en]
+            tem_zh = case_zhwiki_tem_label[tem_zh]
             if tem_en in matched_tem and tem_zh == matched_tem[tem_en]:
                 continue
             print "Matched Templates in Matched Instances", tem_en, tem_zh
@@ -186,9 +188,7 @@ print "ALL matched templates:",len(matched_tem)
 matched_ins = dict((line.strip('\n').split('\t')) for line in open(MATCHED_INSTANCE))
 
 enwiki = read_properties(ENWIKI_TEMPLATE_LABEL)
-#case_enwiki = dict((k.lower(), k) for k in enwiki) #忽略大小写
 zhwiki = read_properties(ZHWIKI_TEMPLATE_LABEL)
-#case_zhwiki = dict((k.lower(), k) for k in zhwiki) #忽略大小写
 
 enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
 for l, tems in sorted(enwiki_label_tems.items()):
@@ -219,6 +219,11 @@ for tem in zhwiki.keys():
     zhwiki.pop(tem)
 print "Left zhwiki templates:",len(zhwiki)
 
+case_enwiki_tem_label = dict((k.lower(), v) for k, v in enwiki_tem_label.items()) #忽略大小写
+for k in sorted(case_enwiki_tem_label.keys()):
+    print k
+case_zhwiki_tem_label = dict((k.lower(), v) for k, v in zhwiki_tem_label.items()) #忽略大小写
+
 print "ALL enwiki template attributes:", sum([len(v) for v in enwiki.values()])
 print "ALL zhwiki template attributes:", sum([len(v) for v in zhwiki.values()])
 
@@ -233,11 +238,11 @@ all_matched = {}
 enwiki_infobox, enwiki_infobox_tem = read_infoboxes(ENWIKI_INFOBOX, matched_ins)
 zhwiki_infobox, zhwiki_infobox_tem = read_infoboxes(ZHWIKI_INFOBOX, matched_ins)
 
-find_matched_1()
-print "Matched templates with different label:",len(matched_tem)
-print "ALL Matched properties:",len(all_matched)
-find_matched_2()
-print "ALL Matched properties:",len(all_matched)
+#find_matched_1()
+#print "Matched templates with different label:",len(matched_tem)
+#print "ALL Matched properties:",len(all_matched)
+#find_matched_2()
+#print "ALL Matched properties:",len(all_matched)
 find_matched_3()
 #find_matched_4()
 #merge()
