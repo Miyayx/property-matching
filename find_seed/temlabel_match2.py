@@ -24,6 +24,8 @@ MATCHED_TEMPLATE = os.path.join(DIR, "template.cl")
 MATCHED_INSTANCE = os.path.join(DIR, "enwiki.zh.en.title.cl")
 ENWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/enwiki-infobox-new.dat"
 ZHWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/zhwiki-infobox-new.dat"
+ENWIKI_MERGED_TEMPLATE = os.path.join(DIR, "enwiki-merged-template-label.dat")
+ZHWIKI_MERGED_TEMPLATE = os.path.join(DIR, "zhwiki-merged-template-label.dat")
 
 def read_properties(fn):
     d = {}
@@ -193,13 +195,18 @@ zhwiki = read_properties(ZHWIKI_TEMPLATE_LABEL)
 enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
 for l, tems in sorted(enwiki_label_tems.items()):
     print l, tems
-    #print l
 print "Final Templates Set:", len(enwiki_label_tems)
+with open(ENWIKI_MERGED_TEMPLATE, 'w') as fw:
+    for tem, l in enwiki_tem_label.iteritems():
+        fw.write("%s\t%s\n"%(tem, l))
+
 zhwiki_tem_label, zhwiki_label_tems = merge_similar_tem(zhwiki)
 for l, tems in sorted(zhwiki_label_tems.items()):
     print l, tems
-    #print l
 print "Final Templates Set:", len(zhwiki_label_tems)
+with open(ZHWIKI_MERGED_TEMPLATE, 'w') as fw:
+    for tem, l in zhwiki_tem_label.iteritems():
+        fw.write("%s\t%s\n"%(tem, l))
 
 print "Origin enwiki templates:",len(enwiki)
 for tem in enwiki.keys():
@@ -220,8 +227,6 @@ for tem in zhwiki.keys():
 print "Left zhwiki templates:",len(zhwiki)
 
 case_enwiki_tem_label = dict((k.lower(), v) for k, v in enwiki_tem_label.items()) #忽略大小写
-for k in sorted(case_enwiki_tem_label.keys()):
-    print k
 case_zhwiki_tem_label = dict((k.lower(), v) for k, v in zhwiki_tem_label.items()) #忽略大小写
 
 print "ALL enwiki template attributes:", sum([len(v) for v in enwiki.values()])
@@ -238,11 +243,11 @@ all_matched = {}
 enwiki_infobox, enwiki_infobox_tem = read_infoboxes(ENWIKI_INFOBOX, matched_ins)
 zhwiki_infobox, zhwiki_infobox_tem = read_infoboxes(ZHWIKI_INFOBOX, matched_ins)
 
-#find_matched_1()
-#print "Matched templates with different label:",len(matched_tem)
-#print "ALL Matched properties:",len(all_matched)
-#find_matched_2()
-#print "ALL Matched properties:",len(all_matched)
+find_matched_1()
+print "Matched templates with different label:",len(matched_tem)
+print "ALL Matched properties:",len(all_matched)
+find_matched_2()
+print "ALL Matched properties:",len(all_matched)
 find_matched_3()
 #find_matched_4()
-#merge()
+merge()
