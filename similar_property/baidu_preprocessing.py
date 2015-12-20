@@ -5,6 +5,8 @@ from similarity import *
 
 BAIDU_DIR = "/home/keg/data/baikedump/"
 INFOBOX=os.path.join(BAIDU_DIR, "baidu-title-property.dat")
+DIR="/home/keg/data/infobox/"
+ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
 
 class Property:
     def __init__(self, l):
@@ -44,9 +46,16 @@ def compare(p1, p2):
 def main():
     
     d = read_properties(INFOBOX)
-    compare(d['英文名'], d['中文名'])
-    compare(d['英文名'], d['外文名'])
-    compare(d['其它外文名'], d['外文名'])
+    for line in open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE):
+        tem, attributes = line.strip('\n').split('\t')
+        attrs = attributes.strip(':::').split(':::')
+        for i in range(len(attrs)):
+            for j in range(i, len(attrs)):
+                print attrs[i], attrs[j], compare(d[attrs[i]], d[attrs[j]])
+        
+    #compare(d['英文名'], d['中文名'])
+    #compare(d['英文名'], d['外文名'])
+    #compare(d['其它外文名'], d['外文名'])
 
 if __name__ == '__main__':
     main()
