@@ -49,7 +49,7 @@ def read_instance_concept(fn, a_set):
             d[article] = set(categories.split(';'))
     return d
 
-def replace_enconcepts(tem_con, *clfns):
+def replace_by_crosslingual(tem_con, *clfns):
     cl = {}
     for fn in clfns:
         for line in open(fn):
@@ -122,7 +122,7 @@ def find_attribute_in_baidu():
         tem_con[tem] = set(s)
     del tem_ins, ins_con
 
-    tem_zhcon = replace_enconcepts(tem_con, WIKI_CROSSLINGUAL)
+    tem_zhcon = replace_by_crosslingual(tem_con, WIKI_CROSSLINGUAL)
     del tem_con
     zh_con_ins = read_concept_instance(BAIDU_INSTANCE_CONCEPT)
     tem_zhins = {}
@@ -134,6 +134,42 @@ def find_attribute_in_baidu():
                 s += zh_con_ins[con]
         tem_zhins[tem] = set(s)
     del zh_con_ins
+    zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
+    tem_baiduattr_count = {}
+    for tem, inses in tem_zhins.iteritems():
+        a_c = {}
+        for ins in inses:
+            if ins in zh_ins_attr:
+                for a in zh_ins_attr[ins]:
+                    a_c[a] = a_c.get(a, 0)+1
+        tem_baiduattr_count[tem] = a_c
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+
+    count = 0
+    f = open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w')
+    print "Templates:",len(tem_baiduattr_count)
+    for tem, attrs in sorted(tem_baiduattr_count.items()):
+        if len(attrs) > 0:
+            print tem, len(attrs)
+            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+            f.flush()
+            count += 1
+    f.close()
+    print "Templates which have attrs Count:",count
+
+def find_attribute_in_baidu2():
+    """
+    1. 找到使用template的instance
+    2. 找到这些instance涉及的概念
+    3. 通过已有的跨语言概念链接，找到baidu中对应的概念
+    4. 通过跨语言instance， 找到template下的attribute
+    """
+    tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
+    inses = []
+    for ins in tem_ins.itervalues():
+        inses += ins
+    tem_zhins = replace_by_crosslingual(tem_ins, WIKI_CROSSLINGUAL)
+    print "tem_zhins"
     zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
     tem_baiduattr_count = {}
     for tem, inses in tem_zhins.iteritems():
