@@ -17,7 +17,7 @@ NEWSPIDER_MODULE = 'template_crawler.spiders'
 #USER_AGENT = 'template_crawler (+http://www.yourdomain.com)'
 
 WIKI='enwiki'
-CONTINUE = False #是否断点续爬
+CONTINUE = True #是否断点续爬
 URLLIB2 = False #是否使用urllib2.Request进行爬取，scrapy自带的Request容易被封
 HTML = True     #是否获取html纯文本
 
