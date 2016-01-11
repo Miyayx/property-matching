@@ -45,6 +45,11 @@ def edit_distance(s1, s2):
             dp[i][j] = min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1] if s1[i-1] == s2[j-1] else dp[i-1][j-1]+1 )
     return dp[l1][l2]
 
+def jaccard_distance(s1, s2):
+    if len(s1) == 0 and len(s2) == 0:
+        return 0
+    return 1 - len(set(list(s1))&set(list(s2))) * 1.0 /len(set(list(s1))|set(list(s2)))
+
 def normalized_google_distance(s1, s2):
     """
     Normalized Google Distance
@@ -52,8 +57,8 @@ def normalized_google_distance(s1, s2):
     set2
     """
     log = math.log
-    return log(max(len(s1), len(s2))) - log(len(set(s1) & set(s2))) / \
-            log(len(s1)+len(s2)) - log(min(len(s1), len(s2)))
+    return (log(max(len(s1), len(s2))) - log(len(set(s1) & set(s2)))) / \
+            (log(len(s1)+len(s2)) - log(min(len(s1), len(s2))))
 
 def valuesimilarity_literal(p1, p2):
     s = 0
@@ -90,11 +95,18 @@ def word_intersection_similarity(w1, w2):
 def edit_distance_similarity(w1, w2):
     return 1-edit_distance(w1, w2)*1.0/max(len(w1),len(w2))
 
+def label_similarity(p1, p2):
+    #return edit_distance_similarity(p1.label, p2.label)
+    return 1-jaccard_distance(p1.label, p2.label)
+
 def reversed_article_similarity(p1, p2):
-    return 1 - len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
+    return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
 
 def domain_similarity(p1, p2):
     return normalized_google_distance(p1.concepts, p2.concepts)
+
+def range_similarity(p1, p2):
+    return normalized_google_distance(p1.values, p2.values)
 
 def article_type_value(p1, p2):
     pass
