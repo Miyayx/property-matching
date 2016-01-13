@@ -96,26 +96,72 @@ def edit_distance_similarity(w1, w2):
     return 1-edit_distance(w1, w2)*1.0/max(len(w1),len(w2))
 
 def label_similarity(p1, p2):
-    #return edit_distance_similarity(p1.label, p2.label)
-    return 1-jaccard_distance(p1.label, p2.label)
+    return edit_distance_similarity(p1.label, p2.label)
+    #return 1-jaccard_distance(p1.label, p2.label)
 
 def reversed_article_similarity(p1, p2):
     return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
 
-def domain_similarity(p1, p2):
+def domain_similarity(p1, p2, cl):
     return normalized_google_distance(p1.concepts, p2.concepts)
 
 def range_similarity(p1, p2):
     return normalized_google_distance(p1.values, p2.values)
 
-def article_type_value(p1, p2):
-    pass
+def value_similarity(p1, p2, cl):
+    s = 0
+    for v in p1.values:
+        if v in cl:
+            # is article type
+            return article_type_value(p1, p2, cl)
+    for v in p1.values: 
+        if has_number(v):
+            return number_type_value(p1, p2)
+    return literal_type_value(p1, p2)
+
+def article_type_value(p1, p2, cl):
+    v1, v2 = p1.values(), p2.values()
+    for v in p1.values():
+        if v in p1.values():
+            v1.remove(v)
+            v1.add(cl[v])
+    #for v in p2.values():
+    #    if not v in cl.values():
+    #        v2.remove(v)
+
+    return normalized_google_distance(v1, v2)
 
 def literal_type_value(p1, p2):
-    pass
+    words1 = [re.findall(r'\w+', v) for v in p1.values]
+    words2 = [re.findall(r'\w+', v) for v in p2.values]
+
+    zhs1 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p1.values]
+    print "zhs1:", zhs1
+    zhs2 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p2.values]
+    print "zhs2:", zhs2
+
+    n = 0
+
+    for i in range(len(words1)):
+        for j in range(len(words2)):
+            if words1[i] == words2[j] or zhs1[i] == zhs2[j]:
+                n += 1
+                break
+
+    return n * 1.0/min(len(zhs1), len(zhs2))
 
 def number_type_value(p1, p2):
-    pass
+    
+    nums1 = [re.findall(r'\d+', v) for v in p1.values]
+    nums2 = [re.findall(r'\d+', v) for v in p2.values]
+
+    n = 0
+    for n1 in nums1:
+        for n2 in nums2:
+            if len(set(n1)&set(n2)) > 0:
+                n += 1
+                break
+    return n * 1.0/min(len(nums1), len(nums2))
 
 if __name__=="__main__":
     print is_date('1991年1月23日')

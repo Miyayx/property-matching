@@ -36,7 +36,7 @@ def main():
             neg_properties.append((en2, zh))
 
     # similar matrix for seeds
-    funs= [] #methods of similarity
+    funs= [domain_similarity, value_similarity] #methods of similarity
     seed_m = features.generate_features(seed_properties, funs)
     labels = []
 

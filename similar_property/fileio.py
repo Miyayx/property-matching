@@ -115,5 +115,8 @@ def read_instance_property(fn):
 def read_seeds(fn):
     d = dict(line.strip('\n').rsplit('\t', 1) for line in codecs.open(fn, 'r', 'utf-8'))
     return d
+
+def read_crosslingual(fn):
+    return dict((line.strip('\n').split('\t')) for line in codecs.open(fn, 'r', 'utf-8'))
     
 
