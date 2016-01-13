@@ -2,6 +2,8 @@
 from similarity import *
 
 import os
+import codecs
+from sklearn.feature_extraction.text import TfidfTransformer
 
 from fileio import *
 from model import *
@@ -13,7 +15,7 @@ from model import *
 def replace_by_crosslingual(tem_con, *clfns):
     cl = {}
     for fn in clfns:
-        for line in open(fn):
+        for line in codecs.open(fn, 'r','utf-8'):
             a, b = line.strip('\n').split('\t')
             cl[a] = b
 
@@ -23,6 +25,9 @@ def replace_by_crosslingual(tem_con, *clfns):
     return d
 
 def tfidf_filter(tem_attrs_count, tem_zhins):
+    """
+    self-define
+    """
     attr_count = {}
     #for t, ats in tem_attrs_count.iteritems():
     #    for a, c in ats.iteritems():
@@ -102,6 +107,35 @@ def generate_domain_properties():
                 tem_domain[tem].baidu_properties[a] = baidu_properties[a]
     return tem_domain
     
+def tfidf_filter2(tem_attrs_count):
+    """
+    use scikit-learn
+    """
+    tems = tem_attrs_count.keys()
+    print "Templates:", len(tems)
+    attrs = []
+    for t, a_s in tem_attrs_count.iteritems():
+        attrs.extend(a_s.keys())
+    attrs = list(set(attrs))
+    print "Attributes:", len(attrs)
+    count = []
+    for t in tems:
+        l = [tem_attrs_count[t][a] if a in tem_attrs_count[t] else 0 for a in attrs ]
+        count.append(l)
+    transformer = TfidfTransformer()
+    tfidf = transformer.fit_transform(count)
+    #print tfidf.toarray()
+    tfidf = tfidf.toarray()
+    f = codecs.open('attributes_by_con.dat', 'w', 'utf-8')
+    for i in range(len(tems)):
+        a_tfidf = {}
+        for j in range(len(attrs)):
+            if tfidf[i][j] > 0:
+                a_tfidf[attrs[j]] = tfidf[i][j]
+        for a, t in sorted(a_tfidf.iteritems(), key=lambda x:x[1], reverse=True)[:100]:
+            print tems[i], a, t 
+            f.write('%s %s %f\n'%(tems[i], a, t))
+    f.close()
 
 def find_attribute_in_baidu():
     """
@@ -125,7 +159,7 @@ def find_attribute_in_baidu():
         for ins in inses:
             s += ins_con[ins]
         tem_con[tem] = set(s)
-    del tem_ins, ins_con
+    del ins_con
 
     tem_zhcon = replace_by_crosslingual(tem_con, WIKI_CROSSLINGUAL)
     del tem_con
@@ -148,19 +182,29 @@ def find_attribute_in_baidu():
                 for a in zh_ins_attr[ins]:
                     a_c[a] = a_c.get(a, 0)+1
         tem_baiduattr_count[tem] = a_c
-    #tfidf_filter(tem_baiduattr_count, tem_zhins)
 
-    count = 0
-    f = open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w')
-    print "Templates:",len(tem_baiduattr_count)
-    for tem, attrs in sorted(tem_baiduattr_count.items()):
-        if len(attrs) > 0:
-            print tem, len(attrs)
-            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-            f.flush()
-            count += 1
-    f.close()
-    print "Templates which have attrs Count:",count
+    #tem_zhins = replace_by_crosslingual(tem_ins, WIKI_CROSSLINGUAL)
+    #for tem, inses in tem_zhins.iteritems():
+    #    a_c = tem_baiduattr_count[tem]
+    #    for ins in inses:
+    #        if ins in zh_ins_attr:
+    #            for a in zh_ins_attr[ins]:
+    #                a_c[a] = a_c.get(a, 0)+2
+    #    tem_baiduattr_count[tem] = a_c
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    tfidf_filter2(tem_baiduattr_count)
+
+    #count = 0
+    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
+    #print "Templates:",len(tem_baiduattr_count)
+    #for tem, attrs in sorted(tem_baiduattr_count.items()):
+    #    if len(attrs) > 0:
+    #        print tem, len(attrs)
+    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #        f.flush()
+    #        count += 1
+    #f.close()
+    #print "Templates which have attrs Count:",count
 
 def find_attribute_in_baidu2():
     """
@@ -185,23 +229,24 @@ def find_attribute_in_baidu2():
                     a_c[a] = a_c.get(a, 0)+1
         tem_baiduattr_count[tem] = a_c
     #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    tfidf_filter2(tem_baiduattr_count)
 
-    count = 0
-    f = open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w')
-    print "Templates:",len(tem_baiduattr_count)
-    for tem, attrs in sorted(tem_baiduattr_count.items()):
-        if len(attrs) > 0:
-            print tem, len(attrs)
-            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-            f.flush()
-            count += 1
-    f.close()
-    print "Templates which have attrs Count:",count
+    #count = 0
+    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
+    #print "Templates:",len(tem_baiduattr_count)
+    #for tem, attrs in sorted(tem_baiduattr_count.items()):
+    #    if len(attrs) > 0:
+    #        print tem, len(attrs)
+    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #        f.flush()
+    #        count += 1
+    #f.close()
+    #print "Templates which have attrs Count:",count
 
 
 if __name__ == "__main__":
     import time
     start = time.time()
-    find_attribute_in_baidu()
+    find_attribute_in_baidu2()
     print "Time Consuming:", time.time()-start
 

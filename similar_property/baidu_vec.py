@@ -4,8 +4,9 @@ import jieba
 import gensim
 import math
 import os
+import numpy
 
-DIR="/home/keg/data/BaiduWord2Vec/"
+DIR="/home/xlore/server36/BaiduWord2Vec/"
 MODEL=os.path.join(DIR, "baidu_corpus.model")
 
 def cosine(v1, v2):
@@ -20,9 +21,10 @@ class Word2Vec:
         print "Load complete!"
         print "Time Consuming:", time.time()-start
 
-    def test(self, w1, w2):
-        v1 = np.zeros(100)
-        v2 = np.zeros(100)
+    def similar(self, w1, w2):
+        print w1, w2
+        v1 = numpy.zeros(400)
+        v2 = numpy.zeros(400)
         if w1 in self.model:
             v1 = self.model[w1]
         else:
@@ -38,11 +40,11 @@ class Word2Vec:
 
 if __name__ == '__main__':
     w2v = Word2Vec(MODEL)
-    print w2v.test(u'中文名',u'英文名' )
-    print w2v.test(u'中文名',u'中文名称' )
-    print w2v.test(u'在校人数',u'在校生人数' )
-    print w2v.test(u'开工',u'开工日期' )
-    print w2v.test(u'分类等级',u'等级分类' )
-    print w2v.test(u'五笔',u'笔顺' )
-    print w2v.test(u'代表产地',u'代表产品' )
+    print w2v.similar(u'中文名',u'英文名' )
+    print w2v.similar(u'中文名',u'中文名称' )
+    print w2v.similar(u'在校人数',u'在校生人数' )
+    print w2v.similar(u'开工',u'开工日期' )
+    print w2v.similar(u'分类等级',u'等级分类' )
+    print w2v.similar(u'五笔',u'笔顺' )
+    print w2v.similar(u'代表产地',u'代表产品' )
 

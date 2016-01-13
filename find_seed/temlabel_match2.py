@@ -3,7 +3,7 @@ import os
 
 """
 Find matched properties in Wikipedia
-以template-attribute标识一个attribute
+与match_temlabel.py不一样的事：以template-attribute标识一个attribute
 首先，根据attribute的共现程度，找出相似的template，合并成一个(记录数据)
 1. 同一个template下template label相同的
 2. cross-template下template label相同的
@@ -82,7 +82,7 @@ def find_matched_2():
     fw = open(MATCHED_TEMPLATE_LABEL2, 'w')
     for tem_en, tem_zh in matched_tem.iteritems(): 
         if tem_en in enwiki and tem_zh in zhwiki:
-            print "Matched Templates:", tem_en, tem_zh
+            #print "Matched Templates:", tem_en, tem_zh
             if tem_en == tem_zh:
                 print "Sample Template, Pass"
                 continue
@@ -110,7 +110,7 @@ def find_matched_3():
             tem_zh = case_zhwiki_tem_label[tem_zh]
             if tem_en in matched_tem and tem_zh == matched_tem[tem_en]:
                 continue
-            print "Matched Templates in Matched Instances", tem_en, tem_zh
+            #print "Matched Templates in Matched Instances", tem_en, tem_zh
             for tem_label, prop_label in enwiki[tem_en].iteritems():
                 if tem_label in zhwiki[tem_zh]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, tem_label, tem_en+'###'+prop_label, tem_zh+'###'+zhwiki[tem_zh][tem_label]))
@@ -120,13 +120,37 @@ def find_matched_3():
 
 def find_matched_4():
     """
-    4. cross-instance下value相同的
+    4. cross-instance下value指向同一个article的
     """
     fw = open(MATCHED_TEMPLATE_LABEL4, 'w')
     for ins_en, ins_zh in matched_ins.iteritems():
         if ins_en in enwiki_infobox and ins_zh in zhwiki_infobox:
             tem_en = enwiki_infobox_tem[ins_en]
             tem_zh = zhwiki_infobox_tem[ins_zh]
+            if tem_en == tem_zh:
+                continue
+            if not tem_en in case_enwiki_tem_label or not tem_zh in case_zhwiki_tem_label:
+                continue
+            tem_en = case_enwiki_tem_label[tem_en]
+            tem_zh = case_zhwiki_tem_label[tem_zh]
+            if tem_en in matched_tem and tem_zh == matched_tem[tem_en]:
+                continue
+            info_en = enwiki_infobox[ins_en]
+            info_zh = zhwiki_infobox[ins_zh]
+            for k, v in info_en.iteritems():
+                if "[[" in v:
+                    v = v[v.index('[[')+2: v.index(']]')]
+                    v = v.split('|')[-1] 
+                if v in matched_ins:
+                    for k2, v2 in info_zh.iteritems():
+                        if "[[" in v2:
+                            v2 = v2[v2.index('[[')+2: v2.index(']]')]
+                            v2 = v2.split('|')[-1] 
+                        if matched_ins[v] == v2:
+                            #print v, v2, matched_ins[v]
+                            fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, '###', tem_en+'###'+k, tem_zh+'###'+k2))
+                            all_matched[tem_en+'###'+k] = tem_zh+'###'+k
+                            fw.flush()
 
     fw.close()
 
@@ -171,7 +195,7 @@ def merge_similar_tem(tem):
                 label_tems[label].add(t2)
                 tem_label[t1] = label 
                 tem_label[t2] = label 
-    print "tems:",len(tems)
+    #print "tems:",len(tems)
     for l, tems in label_tems.iteritems():
         if 'sandbox' in l:
             if len(tems) == 1:
@@ -181,7 +205,7 @@ def merge_similar_tem(tem):
                     label_tems[t] = label_tems[l]
                     label_tems.pop(l)
                     break
-    print "Final Templates Set:", len(label_tems)
+    #print "Final Templates Set:", len(label_tems)
     return tem_label, label_tems
 
     
@@ -193,16 +217,16 @@ enwiki = read_properties(ENWIKI_TEMPLATE_LABEL)
 zhwiki = read_properties(ZHWIKI_TEMPLATE_LABEL)
 
 enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
-for l, tems in sorted(enwiki_label_tems.items()):
-    print l, tems
+#for l, tems in sorted(enwiki_label_tems.items()):
+#    print l, tems
 print "Final Templates Set:", len(enwiki_label_tems)
 with open(ENWIKI_MERGED_TEMPLATE, 'w') as fw:
     for tem, l in enwiki_tem_label.iteritems():
         fw.write("%s\t%s\n"%(tem, l))
 
 zhwiki_tem_label, zhwiki_label_tems = merge_similar_tem(zhwiki)
-for l, tems in sorted(zhwiki_label_tems.items()):
-    print l, tems
+#for l, tems in sorted(zhwiki_label_tems.items()):
+#    print l, tems
 print "Final Templates Set:", len(zhwiki_label_tems)
 with open(ZHWIKI_MERGED_TEMPLATE, 'w') as fw:
     for tem, l in zhwiki_tem_label.iteritems():
@@ -245,9 +269,11 @@ zhwiki_infobox, zhwiki_infobox_tem = read_infoboxes(ZHWIKI_INFOBOX, matched_ins)
 
 find_matched_1()
 print "Matched templates with different label:",len(matched_tem)
-print "ALL Matched properties:",len(all_matched)
+print "After method1, ALL Matched properties:",len(all_matched)
 find_matched_2()
-print "ALL Matched properties:",len(all_matched)
+print "After method2, ALL Matched properties:",len(all_matched)
 find_matched_3()
-#find_matched_4()
+print "After method3, ALL Matched properties:",len(all_matched)
+find_matched_4()
+print "After method4, ALL Matched properties:",len(all_matched)
 merge()
