@@ -31,7 +31,7 @@ def compare(p1, p2):
 def merge_baidu_synonym(domain_dict):
 
     for tem, domain in domain_dict.items():
-        bps = domain_dict.baidu_properties.values()
+        bps = domain.baidu_properties.values()
         cluster = {}
         cluster2 = {}
         for bp1 in bps:
