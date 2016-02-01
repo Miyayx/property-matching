@@ -30,6 +30,8 @@ def get_right_properties(fn):
 def clean(fi, fo, templatefn):
     right_properties = get_right_properties(templatefn)
 
+    fw = codecs.open(fo, 'w', 'utf-8')
+
     for line in codecs.open(fi, 'r', 'utf-8'):
         if len(line.split('\t\t')) < 2:
             fw.write(line)
@@ -37,12 +39,16 @@ def clean(fi, fo, templatefn):
             article, infos = line.strip('\n').split('\t\t')
             new_infos = []
             for info in infos.split('\t'): #对每个template new_facts = {}
+                new_facts = []
                 tem, facts = info.split(':::::', 1)
                 for fact in facts.split('::::;'):
                     if len(fact.split('::::=')) < 2: #没有value的property
                         continue
                     k, v = fact.split('::::=')
-                    if re.match(v, r'.jpg|.png|.svg'): #有图片
+                    if len(v) == 0: #没有value的property
+                        print 'attr,',k,'has no value'
+                        continue
+                    if re.match(r'([-\w]+\.(?:jpg|gif|png))', v): #有图片
                         print 'image:',v
                         continue
                     if tem in right_properties and k in right_properties[tem]:
@@ -56,4 +62,4 @@ def clean(fi, fo, templatefn):
 
 if __name__=="__main__":
     clean(ENWIKI_INFOBOX, NEW_ENWIKI_INFOBOX, ENWIKI_RENDER_LABEL)
-    clean(ZHWIKI_INFOBOX, NEW_ZHWIKI_INFOBOX, ZHWIKI_RENDER_LABEL)
+    #clean(ZHWIKI_INFOBOX, NEW_ZHWIKI_INFOBOX, ZHWIKI_RENDER_LABEL)
