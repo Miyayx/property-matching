@@ -4,6 +4,11 @@ import codecs
 
 from model import *
 
+DIR="/home/xlore/server36/infobox/"
+ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
+ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR, "enwiki-propertyList-translated.dat")
+ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR, "enwiki-infobox-value-translated.dat")
+
 #BAIDU_DIR = "/home/xlore/server36/baikedump/"
 #BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "baidu-title-property.dat")
 #BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "baidu-instance-concept.dat")
@@ -11,7 +16,7 @@ from model import *
 #ENWIKI_DIR = "/home/xlore/disk2/raw.wiki/"
 #ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "enwiki-infobox-new.dat")
 #ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "enwiki-category.dat")
-
+#
 #SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-2.dat")
 
 BAIDU_DIR = "/home/xlore/server36/infobox/small"
@@ -23,9 +28,6 @@ ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "small-enwiki-infobox.dat")
 ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "small-enwiki-category.dat")
 
 SEEDS=os.path.join(ENWIKI_DIR, "small-enwiki-baidu-matched-property.dat")
-
-DIR="/home/xlore/server36/infobox/"
-ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
 
 WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
 BAIDU_CROSSLINGUALL = ""
@@ -138,6 +140,10 @@ def read_seeds(fn):
 
 def read_crosslingual(fn):
     return dict((line.strip('\n').split('\t')) for line in codecs.open(fn, 'r', 'utf-8'))
+
+def read_translate_result(fn):
+    return read_crosslingual(fn)
+
     
 if __name__ == '__main__':
     read_instance_property(BAIDU_INFOBOX)
