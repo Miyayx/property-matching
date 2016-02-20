@@ -47,9 +47,10 @@ def tfidf_filter(tem_attrs_count, tem_zhins):
 
 def generate_domain_properties():
     tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
+    tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
     inses = []
     for domain in tem_domain.itervalues():
-        for prop in domain.wiki_properties:
+        for prop in domain.wiki_properties.values():
             inses += prop.articles
 
     ins_con = read_wiki_instance_concept(ENWIKI_INSTANCE_CONCEPT, set(inses))
@@ -85,32 +86,39 @@ def generate_domain_properties():
                     a_c[a] = a_c.get(a, 0)+1
         tem_baiduattr_count[tem] = a_c
     ##### 算法
-    tfidf_filter(tem_baiduattr_count, tem_zhins)
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    #tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
+    tem_baiduattr = tem_baiduattr_count
     #####
 
-    count = 0
-    f = open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w')
-    print "Templates:",len(tem_baiduattr_count)
-    for tem, attrs in sorted(tem_baiduattr_count.items()):
-        if len(attrs) > 0:
-            print tem, len(attrs)
-            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-            f.flush()
-            count += 1
-    f.close()
-    print "Templates which have attrs Count:",count
+    #count = 0
+    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
+    #print "Templates:",len(tem_baiduattr_count) #记录领域下全部的attribute
+    #for tem, attrs in sorted(tem_baiduattr_count.items()):
+    #    if len(attrs) > 0:
+    #        print tem, len(attrs)
+    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #        f.flush()
+    #        count += 1
+    #f.close()
+    #print "Templates which have attrs Count:",count
     
     baidu_properties = read_baidu_properties(BAIDU_INFOBOX)
-    for tem, attrs in tem_baiduattr_count.items():
+    for tem, attrs in tem_baiduattr.items():
         if len(attrs) > 0:
-            for a in attrs:
-                tem_domain[tem].baidu_properties[a] = baidu_properties[a]
+            for a in attrs.keys()[:100]:
+                try:
+                    tem_domain[tem].baidu_properties[a] = baidu_properties[a]
+                except:
+                    print 'Error Key',a
     return tem_domain
     
 def tfidf_filter2(tem_attrs_count):
     """
     use scikit-learn
     """
+    new_tem_attrs = {}
+
     tems = tem_attrs_count.keys()
     print "Templates:", len(tems)
     attrs = []
@@ -124,7 +132,6 @@ def tfidf_filter2(tem_attrs_count):
         count.append(l)
     transformer = TfidfTransformer()
     tfidf = transformer.fit_transform(count)
-    #print tfidf.toarray()
     tfidf = tfidf.toarray()
     f = codecs.open('attributes_by_con.dat', 'w', 'utf-8')
     for i in range(len(tems)):
@@ -134,8 +141,12 @@ def tfidf_filter2(tem_attrs_count):
                 a_tfidf[attrs[j]] = tfidf[i][j]
         for a, t in sorted(a_tfidf.iteritems(), key=lambda x:x[1], reverse=True)[:100]:
             print tems[i], a, t 
+            if not tems[i] in new_tem_attrs:
+                new_tem_attrs[tems[i]] = []
+            new_tem_attrs[tems[i]].append(a)
             f.write('%s %s %f\n'%(tems[i], a, t))
     f.close()
+    return new_tem_attrs
 
 def find_attribute_in_baidu():
     """

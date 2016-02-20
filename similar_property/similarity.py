@@ -5,6 +5,7 @@
 """
 import math
 import re
+import sys
 
 DATE_PATTERN = re.compile(r'^((?:19|20)?\d{2})[-.]?((?:[0-1]?|1)[0-9])[-.]?((?:[0-3]?|[1-3])[0-9])?$') 
 DATE_PATTERN2 = re.compile(r'[0-9]{2,4}年([0-9]{1,2}月)?([0-9]{1,2}日)?') 
@@ -57,6 +58,8 @@ def normalized_google_distance(s1, s2):
     set2
     """
     log = math.log
+    if len(s1) == 0 or len(s2) == 0 or len(set(s1)&set(s2)) == 0:
+        return 1
     return (log(max(len(s1), len(s2))) - log(len(set(s1) & set(s2)))) / \
             (log(len(s1)+len(s2)) - log(min(len(s1), len(s2))))
 
@@ -120,25 +123,27 @@ def value_similarity(p1, p2, cl):
     return literal_type_value(p1, p2)
 
 def article_type_value(p1, p2, cl):
-    v1, v2 = p1.values(), p2.values()
-    for v in p1.values():
-        if v in p1.values():
+    print 'article_type'
+    v1, v2 = set(p1.values), set(p2.values)
+    for v in set(p1.values):
+        if v in cl:
             v1.remove(v)
             v1.add(cl[v])
-    #for v in p2.values():
+    #for v in p2.values:
     #    if not v in cl.values():
     #        v2.remove(v)
 
     return normalized_google_distance(v1, v2)
 
 def literal_type_value(p1, p2):
+    print 'literal_type'
     words1 = [re.findall(r'\w+', v) for v in p1.values]
     words2 = [re.findall(r'\w+', v) for v in p2.values]
 
     zhs1 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p1.values]
-    print "zhs1:", zhs1
+    #print "zhs1:", zhs1
     zhs2 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p2.values]
-    print "zhs2:", zhs2
+    #print "zhs2:", zhs2
 
     n = 0
 
@@ -151,6 +156,7 @@ def literal_type_value(p1, p2):
     return n * 1.0/min(len(zhs1), len(zhs2))
 
 def number_type_value(p1, p2):
+    print 'number_type'
     
     nums1 = [re.findall(r'\d+', v) for v in p1.values]
     nums2 = [re.findall(r'\d+', v) for v in p2.values]
