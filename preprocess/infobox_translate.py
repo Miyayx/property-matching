@@ -1,53 +1,20 @@
 #-*- coding:utf-8 -*-
 
-import urllib
-import json
-import sys,os  
+import sys,os,re
 import codecs
 
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        pass
- 
-    try:
-        import unicodedata
-        unicodedata.numeric(s)
-        return True
-    except (TypeError, ValueError):
-        pass
- 
-    return False
-
-class Translater:
-    BAIDU_API_KEY="n2dfnNcQZobspd8SYUGvyvsy"
-    API_URL=("http://openapi.baidu.com/public/2.0/bmt/translate?client_id=" + BAIDU_API_KEY + "&q=%s&from=%s&to=%s")
-
-    def __init__(self):
-        pass
-
-    def translate(self, s, source_lan="en", target_lan="zh"):
-        URL = "http://openapi.baidu.com/public/2.0/bmt/translate?client_id=%s&from=%s&to=%s&q="%(Translater.BAIDU_API_KEY, source_lan, target_lan)
-        j = urllib.urlopen((URL+s).encode("UTF-8")).read()
-        #print j
-        return self.parse_json(j)
-
-    def parse_json(self, j):
-        d = {}
-        Json = json.loads(j)
-        if not 'trans_result' in Json:
-            return d
-        for item in Json['trans_result']:
-            src, dst = item['src'], item['dst']
-            d[src] = dst
-        return d
+from utils import *
+from baidu_vip_translater import BaiduTranslater
+from baidu_translater import Translater
 
 def start(fi, fo):
-    translater = Translater()
+    
+    #translater = Translater()
+    translater = BaiduTranslater()
     fw = codecs.open(fo, 'w', 'utf-8')
+    i = 0
     for line in codecs.open(fi, 'r', 'utf-8'):
+        i += 1
         if len(line.split('\t\t')) < 2:
             fw.write(line)
         else:
@@ -60,10 +27,8 @@ def start(fi, fo):
                     if len(fact.split('::::=')) < 2:
                         continue
                     k, v = fact.split('::::=')
-                    if is_number(v):
+                    if not_translate(k, v):
                         continue
-                    if '[[' in v:
-                        v = v.replace('[[','').replace(']]','').split('|')[0]
                     queries.append(v)
                 res = translater.translate('\n'.join(queries))
                 for k, v in res.iteritems():
@@ -71,14 +36,41 @@ def start(fi, fo):
                     info = info.replace(k ,v)
                     #print 'new line:',info
                 new_infos.append(tem+':::::'+info)
-                print info
+                print i, info
             fw.write('%s\t\t%s\n'%(article, '\t'.join(new_infos)))
             fw.flush()
     fw.close()
 
-def translate_test():
-    s = 'This is a test'
-    print Translater().translate(s)
+def label_translate(fi, fo, d={}):
+    print 'Have translated:', len(d)
+    translater = BaiduTranslater()
+    fw = codecs.open(fo, 'w', 'utf-8')
+    queries = []
+    try:
+        for line in codecs.open(fi, 'r', 'utf-8'):
+            #if i > 300:
+            #    break
+            q = line.strip('\n').replace('_', ' ')
+            if q in d:
+                continue
+            queries.append(q)
+            if (len(queries) >= 100):
+                res = translater.translate('\n'.join(queries))
+                print res
+                d.update(res)
+                print "d lenght:",len(d)
+                queries = []
+        res = translater.translate('\n'.join(queries))
+        d.update(res)
+    except Exception,e:
+        print e
+
+    for t in sorted(d.iteritems(), key=lambda v: v[0]):
+        fw.write(t[0]+'\t'+t[1]+'\n')
+    fw.close()
+
+def load_dict(fi):
+    return dict((line.strip('\n').split('\t')) for line in codecs.open(fi, 'r', 'utf-8'))
 
 if __name__=="__main__":
     if len(sys.argv) < 3:  
@@ -86,8 +78,8 @@ if __name__=="__main__":
        sys.exit()  
 
     fi, fo = sys.argv[1], sys.argv[2]
-    start(fi, fo)
-
-    #translate_test()
+    #start(fi, fo)
+    d = load_dict(sys.argv[2])
+    label_translate(fi, fo, d)
 
   
