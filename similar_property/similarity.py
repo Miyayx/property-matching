@@ -113,7 +113,7 @@ def article_similarity(p1, p2, cl):
         if a1 in cl and cl[a1] in p2_articles:
             n += 1
             break
-    return n*1.0/(len(p1.articles) + len(p2.articles) - n)
+    return n*1.0/min((len(p1.articles),len(p2.articles)))
 
 def reversed_article_similarity(p1, p2):
     return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))

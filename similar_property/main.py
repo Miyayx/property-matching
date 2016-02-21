@@ -26,7 +26,6 @@ def main():
     pos_properties = []
     neg_properties = []
     seed_properties = []
-    labels = []
     tems = set()
     for en_label, zh_label in seeds:
         tem, p = en_label.split('\t')
@@ -43,18 +42,13 @@ def main():
            print "domain_dict %s has no baidu property:%s"%(tem, zh_label)
            continue
         pos_properties.append((en, zh))
-        seed_properties.append((en, zh))
-        labels.append(1)
         zh2 = random.sample(domain_dict[tem].baidu_properties.items(), 1)[0][1] #注意这里返回random的是一个item的list
         if zh2.label != zh_label:
             neg_properties.append((en, zh2))
-            seed_properties.append((en, zh2))
-            labels.append(0)
+            continue
         en2 = random.sample(domain_dict[tem].wiki_properties.items(), 1)[0][1]
         if en2.label != en_label:
             neg_properties.append((en2, zh))
-            seed_properties.append((en2, zh))
-            labels.append(0)
 
     #for tem in tems:
     #    print "Template:",tem
@@ -62,8 +56,11 @@ def main():
     #        print k
 
     #seed_properties = pos_properties[:10] + neg_properties[:10]
-    #seed_properties = pos_properties + neg_properties
+    seed_properties = pos_properties + neg_properties
+    labels = [1] * len(pos_properties) + [0] * len(neg_properties)
 
+    print "Positive:", len(pos_properties)
+    print "Negative:", len(neg_properties)
     print "Seeds:",len(seed_properties)
 
     # similar matrix for seeds
@@ -97,6 +94,9 @@ def main():
     #    classifier.predict(matrix)
 
 if __name__ == '__main__':
+    import time
+    start = time.time()
     main()
+    print time.time() - start
 
     
