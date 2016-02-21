@@ -9,6 +9,7 @@ import sys
 
 DATE_PATTERN = re.compile(r'^((?:19|20)?\d{2})[-.]?((?:[0-1]?|1)[0-9])[-.]?((?:[0-3]?|[1-3])[0-9])?$') 
 DATE_PATTERN2 = re.compile(r'[0-9]{2,4}年([0-9]{1,2}月)?([0-9]{1,2}日)?') 
+CHINESE = ur"[\u4e00-\u9fa5]+"
 
 def has_number(s):
     return bool(re.search(r'\d', s))
@@ -99,6 +100,8 @@ def edit_distance_similarity(w1, w2):
     return 1-edit_distance(w1, w2)*1.0/max(len(w1),len(w2))
 
 def label_similarity(p1, p2):
+    if re.match(CHINESE, p2.label): #有中文 
+        return edit_distance_similarity(p1.zhlabel, p2.label)
     return edit_distance_similarity(p1.label, p2.label)
     #return 1-jaccard_distance(p1.label, p2.label)
 

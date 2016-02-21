@@ -26,20 +26,20 @@ def main():
     pos_properties = []
     neg_properties = []
     labels = []
+    tems = set()
     for en_label, zh_label in seeds:
         tem, p = en_label.split('\t')
-        for k in domain_dict[tem].baidu_properties.keys():
-            print k
+        tems.add(tem)
         try:
             en = domain_dict[tem].wiki_properties[p]
         except:
-           print "domain_dict has no wiki property:", p
+           print "domain_dict %s has no wiki property:%s"%(tem, p)
            continue
         try:
-           print zh_label
+           #print zh_label
            zh = domain_dict[tem].baidu_properties[zh_label]
         except:
-           print "domain_dict has no baidu property:", zh_label
+           print "domain_dict %s has no baidu property:%s"%(tem, zh_label)
            continue
         pos_properties.append((en, zh))
         labels.append(1)
@@ -52,17 +52,26 @@ def main():
             neg_properties.append((en2, zh))
             labels.append(0)
 
-    seed_properties = pos_properties[:10] + neg_properties[:10]
+    #for tem in tems:
+    #    print "Template:",tem
+    #    for k in domain_dict[tem].baidu_properties.keys():
+    #        print k
+
+    #seed_properties = pos_properties[:10] + neg_properties[:10]
+    seed_properties = pos_properties + neg_properties
+
     print "Seeds:",len(seed_properties)
 
     # similar matrix for seeds
     #funs= [domain_similarity, value_similarity] #methods of similarity
-    funs= [value_similarity] #methods of similarity
-    seed_m = features.generate_features(seed_properties, funs)
+    
+    funs = [label_similarity]
+    funs_cl = [value_similarity] #methods of similarity
+    seed_m = features.generate_features(seed_properties, funs, funs_cl)
     print seed_m
 
     #labels = [p[0].label+p[1].label for p in seed_properties]
-    print "Logistic Regression..."
+    print "\nLogistic Regression..."
     classifier = LogisticRegression(C=1.0)
     classifier.fit(seed_m, labels)
     print classifier.score(seed_m, labels)

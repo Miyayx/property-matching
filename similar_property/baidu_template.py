@@ -24,6 +24,18 @@ def replace_by_crosslingual(tem_con, *clfns):
         d[tem] = set([cl[con] for con in cons if con in cl])
     return d
 
+def add_translate_labels(tem_domain):
+    tran = read_translate_result(ENWIKI_PROPERTY_TRANSLATED)
+    for tem, domain in tem_domain.iteritems():
+        for p, prop in domain.wiki_properties.iteritems():
+            prop.zhlabel = tran.get(prop.label, "")
+
+def add_translate_values(tem_domain):
+    tran = read_translate_result(ENWIKI_INFOBOX_VALUE_TRANSLATED)
+    for tem, domain in tem_domain.iteritems():
+        for p, prop in domain.wiki_properties.iteritems():
+            prop.zhvalues = [tran.get(v, v) for v in prop.values]
+
 def tfidf_filter(tem_attrs_count, tem_zhins):
     """
     self-define
@@ -52,6 +64,10 @@ def generate_domain_properties():
     for domain in tem_domain.itervalues():
         for prop in domain.wiki_properties.values():
             inses += prop.articles
+
+    #加入翻译结果
+    add_translate_labels(tem_domain)
+    add_translate_values(tem_domain)
 
     ins_con = read_wiki_instance_concept(ENWIKI_INSTANCE_CONCEPT, set(inses))
     del inses
@@ -87,8 +103,8 @@ def generate_domain_properties():
         tem_baiduattr_count[tem] = a_c
     ##### 算法
     #tfidf_filter(tem_baiduattr_count, tem_zhins)
-    #tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
-    tem_baiduattr = tem_baiduattr_count
+    tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
+    #tem_baiduattr = tem_baiduattr_count
     #####
 
     #count = 0
@@ -106,7 +122,8 @@ def generate_domain_properties():
     baidu_properties = read_baidu_properties(BAIDU_INFOBOX)
     for tem, attrs in tem_baiduattr.items():
         if len(attrs) > 0:
-            for a in attrs.keys()[:100]:
+            #for a in attrs.keys()[:100]:
+            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:100]:
                 try:
                     tem_domain[tem].baidu_properties[a] = baidu_properties[a]
                 except:
@@ -118,6 +135,7 @@ def tfidf_filter2(tem_attrs_count):
     use scikit-learn
     """
     new_tem_attrs = {}
+    new_tem_attrs_tfidf = {}
 
     tems = tem_attrs_count.keys()
     print "Templates:", len(tems)
@@ -143,10 +161,12 @@ def tfidf_filter2(tem_attrs_count):
             print tems[i], a, t 
             if not tems[i] in new_tem_attrs:
                 new_tem_attrs[tems[i]] = []
+                new_tem_attrs_tfidf[tems[i]] = {}
             new_tem_attrs[tems[i]].append(a)
+            new_tem_attrs_tfidf[tems[i]][a] = t
             f.write('%s %s %f\n'%(tems[i], a, t))
     f.close()
-    return new_tem_attrs
+    return new_tem_attrs_tfidf
 
 def find_attribute_in_baidu():
     """

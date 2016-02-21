@@ -3,8 +3,11 @@
 class Property:
     def __init__(self, l):
         self.label = l
+        self.zhlabel = None
+        self.enlabel = None
         self.articles = []
         self.values = []
+        self.zhvalues = []
         self.domain = ""
 
 class Domain:
