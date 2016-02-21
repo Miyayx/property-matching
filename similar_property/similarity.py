@@ -131,9 +131,9 @@ def value_similarity(p1, p2, cl):
         if v in cl:
             # is article type
             return article_type_value(p1, p2, cl)
-    for v in p1.values: 
-        if has_number(v):
-            return number_type_value(p1, p2)
+    #for v in p1.values: 
+    #    if has_number(v):
+    #        return number_type_value(p1, p2)
     return literal_type_value(p1, p2)
 
 def article_type_value(p1, p2, cl):
@@ -196,6 +196,16 @@ def number_type_value(p1, p2):
                 n += 1
                 break
     return n * 1.0/min(len(nums1), len(nums2))
+
+def popular_similarity(p1, p2):
+    print 'popular similarity'
+    if p1.popular == None or p2.popular == None:
+        print 'No popular value for properties'
+        return 0
+    else:
+        print p1.label, p1.popular, p2.label, p2.popular
+        return abs(p1.popular - p2.popular)
+
 
 if __name__=="__main__":
     print is_date('1991年1月23日')
