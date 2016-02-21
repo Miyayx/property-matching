@@ -4,7 +4,8 @@ import codecs
 
 from model import *
 
-DIR="/home/xlore/server36/infobox/"
+#DIR="/home/xlore/server36/infobox/"
+DIR="/Users/Miyayx/data"
 ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
 ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR, "enwiki-propertyList-translated.dat")
 ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR, "enwiki-infobox-value-translated.dat")
@@ -19,17 +20,19 @@ ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR, "enwiki-infobox-value-translat
 #
 #SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-2.dat")
 
-BAIDU_DIR = "/home/xlore/server36/infobox/small"
+#BAIDU_DIR = "/home/xlore/server36/infobox/small"
+BAIDU_DIR = "/Users/Miyayx/data/small"
 BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "small-baidu-title-property.dat")
 BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "small-baidu-instance-concept.dat")
 
-ENWIKI_DIR = "/home/xlore/server36/infobox/small"
+ENWIKI_DIR = "/Users/Miyayx/data/small"
 ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "small-enwiki-infobox.dat")
 ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "small-enwiki-category.dat")
 
 SEEDS=os.path.join(ENWIKI_DIR, "small-enwiki-baidu-matched-property.dat")
 
-WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
+#WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
+WIKI_CROSSLINGUAL = "/Users/Miyayx/data/cl.en.zh.all"
 BAIDU_CROSSLINGUALL = ""
 
 
@@ -47,7 +50,8 @@ def read_baidu_properties(fn):
                 continue
             prop = d.get(p, Property(p))
             prop.articles.append(title)
-            prop.values.append(v)
+            if len(v) > 0:
+                prop.values.append(v)
             d[p] = prop
     return d
 
@@ -72,7 +76,8 @@ def read_wiki_properties(fn):
             p, v = pair.split('::::=')
             prop = d[tem].wiki_properties.get(p, Property(p))
             prop.articles.append(title)
-            prop.values.append(v)
+            if len(v) > 0:
+                prop.values.append(v)
             d[tem].wiki_properties[p] = prop
     return d
 

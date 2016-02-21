@@ -56,9 +56,12 @@ def label_translate(fi, fo, d={}):
             queries.append(q)
             if (len(queries) >= 100):
                 res = translater.translate('\n'.join(queries))
+                if len(res) == 0:
+                    print 'no result'
+                    break
                 print res
                 d.update(res)
-                print "d lenght:",len(d)
+                print "d length:",len(d)
                 queries = []
         res = translater.translate('\n'.join(queries))
         d.update(res)

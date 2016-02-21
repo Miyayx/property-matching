@@ -66,15 +66,18 @@ def main():
     #funs= [domain_similarity, value_similarity] #methods of similarity
     
     funs = [label_similarity]
-    funs_cl = [value_similarity] #methods of similarity
-    seed_m = features.generate_features(seed_properties, funs, funs_cl)
-    print seed_m
+    funs_cl = [article_similarity] #methods of similarity
+    seed_matrix = features.generate_features(seed_properties, funs, funs_cl)
+    print seed_matrix
 
     #labels = [p[0].label+p[1].label for p in seed_properties]
     print "\nLogistic Regression..."
+    
     classifier = LogisticRegression(C=1.0)
-    classifier.fit(seed_m, labels)
-    print classifier.score(seed_m, labels)
+    classifier.fit(seed_matrix, labels)
+    print classifier.predict(seed_matrix)
+    print labels
+    print classifier.score(seed_matrix, labels)
 
     #for tem, domain in domain_dict.items():
 

@@ -25,12 +25,18 @@ def replace_by_crosslingual(tem_con, *clfns):
     return d
 
 def add_translate_labels(tem_domain):
+    """
+    添加翻译的zhlable给property
+    """
     tran = read_translate_result(ENWIKI_PROPERTY_TRANSLATED)
     for tem, domain in tem_domain.iteritems():
         for p, prop in domain.wiki_properties.iteritems():
             prop.zhlabel = tran.get(prop.label, "")
 
 def add_translate_values(tem_domain):
+    """
+    添加翻译的zhvalue给property
+    """
     tran = read_translate_result(ENWIKI_INFOBOX_VALUE_TRANSLATED)
     for tem, domain in tem_domain.iteritems():
         for p, prop in domain.wiki_properties.iteritems():
@@ -61,6 +67,8 @@ def generate_domain_properties():
     tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
     tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
     inses = []
+    
+    #所有wiki instance
     for domain in tem_domain.itervalues():
         for prop in domain.wiki_properties.values():
             inses += prop.articles
@@ -123,7 +131,7 @@ def generate_domain_properties():
     for tem, attrs in tem_baiduattr.items():
         if len(attrs) > 0:
             #for a in attrs.keys()[:100]:
-            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:100]:
+            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:120]:
                 try:
                     tem_domain[tem].baidu_properties[a] = baidu_properties[a]
                 except:
@@ -157,7 +165,7 @@ def tfidf_filter2(tem_attrs_count):
         for j in range(len(attrs)):
             if tfidf[i][j] > 0:
                 a_tfidf[attrs[j]] = tfidf[i][j]
-        for a, t in sorted(a_tfidf.iteritems(), key=lambda x:x[1], reverse=True)[:100]:
+        for a, t in sorted(a_tfidf.iteritems(), key=lambda x:x[1], reverse=True)[:]:
             print tems[i], a, t 
             if not tems[i] in new_tem_attrs:
                 new_tem_attrs[tems[i]] = []

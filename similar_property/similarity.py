@@ -105,10 +105,21 @@ def label_similarity(p1, p2):
     return edit_distance_similarity(p1.label, p2.label)
     #return 1-jaccard_distance(p1.label, p2.label)
 
+def article_similarity(p1, p2, cl):
+    print "article_similarity"
+    n = 0
+    p2_articles = set(p2.articles)
+    for a1 in p1.articles:
+        if a1 in cl and cl[a1] in p2_articles:
+            n += 1
+            break
+    return n*1.0/(len(p1.articles) + len(p2.articles) - n)
+
 def reversed_article_similarity(p1, p2):
     return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
 
 def domain_similarity(p1, p2, cl):
+    print "domain_similarity"
     return normalized_google_distance(p1.concepts, p2.concepts)
 
 def range_similarity(p1, p2):
@@ -138,25 +149,39 @@ def article_type_value(p1, p2, cl):
 
     return normalized_google_distance(v1, v2)
 
+#def literal_type_value(p1, p2):
+#    print 'literal_type'
+#    words1 = [re.findall(r'\w+', v) for v in p1.zhvalues]
+#    words2 = [re.findall(r'\w+', v) for v in p2.values]
+#
+#    zhs1 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p1.zhvalues]
+#    #print "zhs1:", zhs1
+#    zhs2 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p2.values]
+#    #print "zhs2:", zhs2
+#
+#    n = 0
+#
+#    for i in range(len(words1)):
+#        for j in range(len(words2)):
+#            if words1[i] == words2[j] or zhs1[i] == zhs2[j]:
+#                n += 1
+#                break
+#
+#    return n * 1.0/min(len(zhs1), len(zhs2))
+
 def literal_type_value(p1, p2):
     print 'literal_type'
-    words1 = [re.findall(r'\w+', v) for v in p1.values]
-    words2 = [re.findall(r'\w+', v) for v in p2.values]
+    values1, values2 = p1.zhvalues, p2.values
+    
+    if len(values1) == 0 or len(values2) == 0:
+        return 0 
 
-    zhs1 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p1.values]
-    #print "zhs1:", zhs1
-    zhs2 = [re.findall(ur'[\u4e00-\u9fff]+', v) for v in p2.values]
-    #print "zhs2:", zhs2
+    s = 0
+    for v1 in values1:
+        for v2 in values2:
+            s += edit_distance_similarity(v1, v2)
 
-    n = 0
-
-    for i in range(len(words1)):
-        for j in range(len(words2)):
-            if words1[i] == words2[j] or zhs1[i] == zhs2[j]:
-                n += 1
-                break
-
-    return n * 1.0/min(len(zhs1), len(zhs2))
+    return 1 - s/(len(values1) * len(values2))
 
 def number_type_value(p1, p2):
     print 'number_type'
