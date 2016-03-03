@@ -97,9 +97,13 @@ def word_intersection_similarity(w1, w2):
     return len(set(w1)&set(w2))*1.0/len(set(w1)|set(w2))
 
 def edit_distance_similarity(w1, w2):
+    if len(w1) == 0 or len(w2) == 0:
+        return 0
     return 1-edit_distance(w1, w2)*1.0/max(len(w1),len(w2))
 
 def label_similarity(p1, p2):
+    if len(p1.label) == 0 or len(p2.label) == 0:
+        return 0
     if re.match(CHINESE, p2.label): #有中文 
         return edit_distance_similarity(p1.zhlabel, p2.label)
     return edit_distance_similarity(p1.label, p2.label)
