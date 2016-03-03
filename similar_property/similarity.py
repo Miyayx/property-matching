@@ -105,18 +105,31 @@ def label_similarity(p1, p2):
     return edit_distance_similarity(p1.label, p2.label)
     #return 1-jaccard_distance(p1.label, p2.label)
 
+#def article_similarity(p1, p2, cl):
+#    print "article_similarity"
+#    n = 0
+#    p2_articles = set(p2.articles)
+#    for a1 in p1.articles:
+#        if a1 in cl and cl[a1] in p2_articles:
+#            n += 1
+#            break
+#    return n*1.0/min((len(p1.articles),len(p2.articles)))
+
 def article_similarity(p1, p2, cl):
     print "article_similarity"
     n = 0
-    p2_articles = set(p2.articles)
-    for a1 in p1.articles:
+    p2_articles = set(p2.infobox.keys())
+    for a1 in p1.infobox.keys():
         if a1 in cl and cl[a1] in p2_articles:
             n += 1
             break
-    return n*1.0/min((len(p1.articles),len(p2.articles)))
+    return n*1.0/min((len(p1.infobox.keys()),len(p2.infobox.keys())))
+
+#def reversed_article_similarity(p1, p2):
+#    return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
 
 def reversed_article_similarity(p1, p2):
-    return len((set(p1.articles) & set(p2.articles)))*1.0/min(len(p1.articles), len(p2.articles))
+    return len((set(p1.infobox.keys()) & set(p2.infobox.keys())))*1.0/min(len(p1.infobox.keys()), len(p2.infobox.keys()))
 
 def domain_similarity(p1, p2, cl):
     print "domain_similarity"
@@ -127,27 +140,72 @@ def range_similarity(p1, p2):
 
 def value_similarity(p1, p2, cl):
     s = 0
-    for v in p1.values:
+    for v in p1.infobox.values():
         if v in cl:
             # is article type
             return article_type_value(p1, p2, cl)
-    #for v in p1.values: 
-    #    if has_number(v):
-    #        return number_type_value(p1, p2)
-    return literal_type_value(p1, p2)
+    for v in p1.infobox.values(): 
+        if has_number(v):
+            return number_type_value(p1, p2, cl)
+    return literal_type_value(p1, p2, cl)
+
+def value_similarity2(p1, p2, cl):
+    N = 0
+    s = 0
+    for a1, v1 in p1.infobox.iteritems():
+        v2 = None
+        if a1 in p2.infobox:
+            N += 1
+            v2 = p2.infobox[a1]
+        elif a1 in cl and cl[a1] in p2.infobox:
+            N += 1
+            a2 = cl[a1]
+            v2 = p2.infobox[a2]
+        if v2 == None:
+            continue
+        if v1 in cl and v2 == cl[v1]: #article type
+            s += 1
+        elif has_number(v1) and has_number(v2):
+            nums1 = re.findall(r'\d+', v1) 
+            nums2 = re.findall(r'\d+', v2)
+
+            n = 0
+            for n1 in nums1:
+                for n2 in nums2:
+                    if len(set(n1)&set(n2)) > 0:
+                        n += 1
+                        break
+            s += n * 1.0/min(len(nums1), len(nums2))
+        else:
+            s += edit_distance_similarity(v1, v2)
+    return s * 1.0 / N if N > 0 else 0
+
 
 def article_type_value(p1, p2, cl):
     print 'article_type'
-    v1, v2 = set(p1.values), set(p2.values)
-    for v in set(p1.values):
-        if v in cl:
-            v1.remove(v)
-            v1.add(cl[v])
-    #for v in p2.values:
-    #    if not v in cl.values():
-    #        v2.remove(v)
+    N = 0
+    c = 0
+    for a1, v1 in p1.infobox.iteritems():
+        if a1 in p2.infobox:
+            N += 1
+            v2 = p2.infobox[a1]
+            if v1 in cl and v2 == cl[v1]:
+                c += 1
+        elif a in cl and cl[a] in p2.infobox:
+            N += 1
+            a2 = cl[a]
+            v2 = p2.infobox[a2]
+            if v1 in cl and v2 == cl[v1]:
+                c += 1
 
-    return normalized_google_distance(v1, v2)
+    #v1, v2 = set(p1.infobox.values()), set(p2.infobox.values())
+    #for v in set(p1.infobox.values()):
+    #    if v in cl:
+    #        v1.remove(v)
+    #        v1.add(cl[v])
+    #
+    #return normalized_google_distance(v1, v2)
+    return c*1.0/N if N > 0 else 0
 
 #def literal_type_value(p1, p2):
 #    print 'literal_type'
@@ -182,6 +240,23 @@ def literal_type_value(p1, p2):
             s += edit_distance_similarity(v1, v2)
 
     return 1 - s/(len(values1) * len(values2))
+
+def literal_type_value2(p1, p2, cl):
+    print 'literal_type'
+    N = 0
+    s = 0
+    for a1, v1 in p1.infobox.iteritems():
+        if a1 in p2.infobox:
+            N += 1
+            v2 = p2.infobox[a1]
+            s += edit_distance_similarity(v1, v2)
+        elif a in cl and cl[a] in p2.infobox:
+            N += 1
+            a2 = cl[a]
+            v2 = p2.infobox[a2]
+            s += edit_distance_similarity(v1, v2)
+
+    return s*1.0 / N if N > 0 else 0
 
 def number_type_value(p1, p2):
     print 'number_type'

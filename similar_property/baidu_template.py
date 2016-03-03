@@ -65,18 +65,20 @@ def tfidf_filter(tem_attrs_count, tem_zhins):
 
 def generate_domain_properties():
     tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
-    tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
+    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
     inses = []
     
     #所有wiki instance
     for domain in tem_domain.itervalues():
         for prop in domain.wiki_properties.values():
-            inses += prop.articles
+            #inses += prop.articles
+            inses += prop.infobox.keys()
 
     #计算wiki property在特定domain下的常用程度
     for tem, domain in tem_domain.iteritems():
         for prop in domain.wiki_properties.values():
-            prop.popular = len(prop.articles)*0.1/len(tem_ins[tem])
+            #prop.popular = len(prop.articles)*0.1/len(tem_ins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_ins[tem])
 
     #加入翻译结果
     add_translate_labels(tem_domain)
@@ -89,7 +91,8 @@ def generate_domain_properties():
     for tem, inses in tem_ins.iteritems():
         s = []
         for ins in inses:
-            s += ins_con[ins]
+            if ins in ins_con:
+                s += ins_con[ins]
         tem_con[tem] = set(s)
     del tem_ins, ins_con
 
@@ -145,7 +148,8 @@ def generate_domain_properties():
     #计算baidu property在特定domain下的常用程度
     for tem, domain in tem_domain.iteritems():
         for prop in domain.baidu_properties.values():
-            prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
+            #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
 
     return tem_domain
     
@@ -196,7 +200,7 @@ def find_attribute_in_baidu():
     或者？？
     直接用跨语言instance？
     """
-    tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
+    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
     inses = []
     for ins in tem_ins.itervalues():
         inses += ins
@@ -263,7 +267,7 @@ def find_attribute_in_baidu2():
     3. 通过已有的跨语言概念链接，找到baidu中对应的概念
     4. 通过跨语言instance， 找到template下的attribute
     """
-    tem_ins = read_wiki_infobox(ENWIKI_INFOBOX)
+    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
     inses = []
     for ins in tem_ins.itervalues():
         inses += ins

@@ -49,9 +49,11 @@ def read_baidu_properties(fn):
             except:
                 continue
             prop = d.get(p, Property(p))
-            prop.articles.append(title)
+            #prop.articles.append(title)
+            #if len(v) > 0:
+            #    prop.values.append(v)
             if len(v) > 0:
-                prop.values.append(v)
+                prop.infobox[title] = v
             d[p] = prop
     return d
 
@@ -75,13 +77,15 @@ def read_wiki_properties(fn):
         for pair in infobox.split('::::;'):
             p, v = pair.split('::::=')
             prop = d[tem].wiki_properties.get(p, Property(p))
-            prop.articles.append(title)
+            #prop.articles.append(title)
+            #if len(v) > 0:
+            #    prop.values.append(v)
             if len(v) > 0:
-                prop.values.append(v)
+                prop.infobox[title] = v
             d[tem].wiki_properties[p] = prop
     return d
 
-def read_wiki_infobox(fn):
+def read_wiki_template_instance(fn):
     """
     d: key:template, value: instance set
     """
@@ -98,6 +102,45 @@ def read_wiki_infobox(fn):
         if not tem in d:
             d[tem] = set()
         d[tem].add(title)
+    return d
+
+def read_wiki_infobox(fn):
+    print "Reading %s ..."%fn
+    d = {}
+    for line in codecs.open(fn, 'r', 'utf-8'):
+        if not '\t\t' in line:
+            continue
+        title, info = line.strip('\n').split('\t\t')
+        info = info.split('\t')[0]
+        tem, infobox = info.split(':::::',1)
+        tem = 'template:'+tem
+        
+        ad = d.get(tem, ArticleDomain(tem))
+        article = Article(title)
+
+        for pair in infobox.split('::::;'):
+            p, v = pair.split('::::=')
+            if len(v) > 0:
+                prop = ArticleProperty(p)
+                prop.value = v
+                article.infobox[p] = prop
+        ad.articles[title] = article
+        d[tem] = ad
+    return d
+
+def read_baidu_infobox(fn):
+    print "Reading baidu instance and property ..."
+    d = {}
+    for line in codecs.open(fn, 'r', 'utf-8'):
+        try:
+            article, facts = line.strip('\n').split('\t')
+            d[article] = {}
+            for fact in facts.split('::;'):
+                p, v = fact.split(':::')
+                if len(v) > 0:
+                    d[article][p] = v
+        except:
+            print line
     return d
 
 def read_wiki_instance_concept(fn, a_set):
