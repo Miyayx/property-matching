@@ -42,6 +42,23 @@ def add_translate_values(tem_domain):
         for p, prop in domain.wiki_properties.iteritems():
             prop.zhvalues = [tran.get(v, v) for v in prop.values]
 
+def add_popular_wiki(tem_domain, tem_ins):
+    if not tem_ins:
+        tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
+    #计算wiki property在特定domain下的常用程度
+    for tem, domain in tem_domain.iteritems():
+        for prop in domain.wiki_properties.values():
+            #prop.popular = len(prop.articles)*0.1/len(tem_ins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_ins[tem])
+
+def add_popular_baidu(tem_domain, tem_zhins):
+    #计算baidu property在特定domain下的常用程度
+    for tem, domain in tem_domain.iteritems():
+        for prop in domain.baidu_properties.values():
+            #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
+
+
 def tfidf_filter(tem_attrs_count, tem_zhins):
     """
     self-define
@@ -63,96 +80,6 @@ def tfidf_filter(tem_attrs_count, tem_zhins):
             idf = math.log(len(tem_attrs_count)/(0.1+sum([1 for t in tem_attrs_count if a in tem_attrs_count[t]])*1.0))
             #print t, a, tf*idf
 
-def generate_domain_properties():
-    tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
-    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
-    inses = []
-    
-    #所有wiki instance
-    for domain in tem_domain.itervalues():
-        for prop in domain.wiki_properties.values():
-            #inses += prop.articles
-            inses += prop.infobox.keys()
-
-    #计算wiki property在特定domain下的常用程度
-    for tem, domain in tem_domain.iteritems():
-        for prop in domain.wiki_properties.values():
-            #prop.popular = len(prop.articles)*0.1/len(tem_ins[tem])
-            prop.popular = len(prop.infobox.keys())*0.1/len(tem_ins[tem])
-
-    #加入翻译结果
-    add_translate_labels(tem_domain)
-    add_translate_values(tem_domain)
-
-    ins_con = read_wiki_instance_concept(ENWIKI_INSTANCE_CONCEPT, set(inses))
-    del inses
-    tem_con = {}
-    print "tem_con"
-    for tem, inses in tem_ins.iteritems():
-        s = []
-        for ins in inses:
-            if ins in ins_con:
-                s += ins_con[ins]
-        tem_con[tem] = set(s)
-    del tem_ins, ins_con
-
-    tem_zhcon = replace_by_crosslingual(tem_con, WIKI_CROSSLINGUAL)
-    del tem_con
-    zh_con_ins = read_baidu_concept_instance(BAIDU_INSTANCE_CONCEPT)
-    tem_zhins = {}
-    print "tem_zhins"
-    for tem, cons in tem_zhcon.iteritems():
-        s = []
-        for con in cons:
-            if con in zh_con_ins:
-                s += zh_con_ins[con]
-        tem_zhins[tem] = set(s)
-    del zh_con_ins
-    zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
-    tem_baiduattr_count = {}
-    for tem, inses in tem_zhins.iteritems():
-        a_c = {}
-        for ins in inses:
-            if ins in zh_ins_attr:
-                for a in zh_ins_attr[ins]:
-                    a_c[a] = a_c.get(a, 0)+1
-        tem_baiduattr_count[tem] = a_c
-    ##### 算法
-    #tfidf_filter(tem_baiduattr_count, tem_zhins)
-    tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
-    #tem_baiduattr = tem_baiduattr_count
-    #####
-
-    #count = 0
-    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
-    #print "Templates:",len(tem_baiduattr_count) #记录领域下全部的attribute
-    #for tem, attrs in sorted(tem_baiduattr_count.items()):
-    #    if len(attrs) > 0:
-    #        print tem, len(attrs)
-    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-    #        f.flush()
-    #        count += 1
-    #f.close()
-    #print "Templates which have attrs Count:",count
-    
-    baidu_properties = read_baidu_properties(BAIDU_INFOBOX)
-    for tem, attrs in tem_baiduattr.items():
-        if len(attrs) > 0:
-            #for a in attrs.keys()[:100]:
-            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:150]:
-                try:
-                    tem_domain[tem].baidu_properties[a] = baidu_properties[a]
-                except:
-                    print 'Error Key',a
-
-    #计算baidu property在特定domain下的常用程度
-    for tem, domain in tem_domain.iteritems():
-        for prop in domain.baidu_properties.values():
-            #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
-            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
-
-    return tem_domain
-    
 def tfidf_filter2(tem_attrs_count):
     """
     use scikit-learn
@@ -191,6 +118,53 @@ def tfidf_filter2(tem_attrs_count):
     f.close()
     return new_tem_attrs_tfidf
 
+def domain_constrain_baidu(tem_domain, tem_zhins):
+    import copy
+    for tem, domain in tem_domain.iteritems():
+        if not tem in tem_zhins:
+            continue
+        for attr, prop in domain.baidu_properties.iteritems():
+            infobox = copy.copy(prop.infobox)
+            for article, value in infobox.iteritems():
+                if not article in tem_zhins[tem]:
+                    #print 'Delete article ', article, 'from ', tem
+                    prop.infobox.pop(article)
+
+def generate_domain_properties():
+    tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
+    tem_baiduattr_count, tem_ins, tem_zhins = find_attribute_in_baidu()
+
+    #加入wiki popular信息
+    add_popular_wiki(tem_domain, tem_ins)
+
+    #加入翻译结果
+    add_translate_labels(tem_domain)
+    add_translate_values(tem_domain)
+
+    ##### 算法
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    #tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
+    tem_baiduattr = tem_baiduattr_count
+    #####
+
+    baidu_properties = read_baidu_properties(BAIDU_INFOBOX)
+
+    for tem, attrs in tem_baiduattr.items():
+        if len(attrs) > 0:
+            #for a in attrs.keys()[:100]:
+            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:]:
+                try:
+                    tem_domain[tem].baidu_properties[a] = baidu_properties[a]
+                except:
+                    print 'Error Key',a
+
+    domain_constrain_baidu(tem_domain, tem_zhins)
+
+    #加入baidu popular信息
+    add_popular_baidu(tem_domain, tem_zhins)
+
+    return tem_domain
+    
 def find_attribute_in_baidu():
     """
     1. 找到使用template的instance
@@ -211,7 +185,8 @@ def find_attribute_in_baidu():
     for tem, inses in tem_ins.iteritems():
         s = []
         for ins in inses:
-            s += ins_con[ins]
+            if ins in ins_con:
+                s += ins_con[ins]
         tem_con[tem] = set(s)
     del ins_con
 
@@ -237,17 +212,6 @@ def find_attribute_in_baidu():
                     a_c[a] = a_c.get(a, 0)+1
         tem_baiduattr_count[tem] = a_c
 
-    #tem_zhins = replace_by_crosslingual(tem_ins, WIKI_CROSSLINGUAL)
-    #for tem, inses in tem_zhins.iteritems():
-    #    a_c = tem_baiduattr_count[tem]
-    #    for ins in inses:
-    #        if ins in zh_ins_attr:
-    #            for a in zh_ins_attr[ins]:
-    #                a_c[a] = a_c.get(a, 0)+2
-    #    tem_baiduattr_count[tem] = a_c
-    #tfidf_filter(tem_baiduattr_count, tem_zhins)
-    tfidf_filter2(tem_baiduattr_count)
-
     #count = 0
     #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
     #print "Templates:",len(tem_baiduattr_count)
@@ -259,6 +223,7 @@ def find_attribute_in_baidu():
     #        count += 1
     #f.close()
     #print "Templates which have attrs Count:",count
+    return tem_baiduattr_count, tem_ins, tem_zhins
 
 def find_attribute_in_baidu2():
     """
@@ -297,10 +262,56 @@ def find_attribute_in_baidu2():
     #f.close()
     #print "Templates which have attrs Count:",count
 
+    return tem_baiduattr_count, tem_ins, tem_zhins
+
+def find_attribute_in_baidu3():
+    """
+    1. 找到使用template的baidu instance
+    2. 统计这些instance使用的property
+    选出现频数站中间30%的property作为种子
+    将使用种子集中超过60%的article
+    3. 通过已有的跨语言概念链接，找到baidu中对应的概念
+    4. 通过跨语言instance， 找到template下的attribute
+    """
+    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
+    inses = []
+    for tem, ins in tem_ins.iteritems():
+        inses += ins
+
+    tem_zhins = replace_by_crosslingual(tem_ins, WIKI_CROSSLINGUAL)
+    print "tem_zhins"
+    for tem, ins in tem_zhins.iteritems():
+        print ','.join(ins)
+    
+    zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
+    tem_baiduattr_count = {}
+    for tem, inses in tem_zhins.iteritems():
+        a_c = {}
+        for ins in inses:
+            if ins in zh_ins_attr:
+                for a in zh_ins_attr[ins]:
+                    a_c[a] = a_c.get(a, 0)+1
+        tem_baiduattr_count[tem] = a_c
+
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    tfidf_filter2(tem_baiduattr_count)
+
+    count = 0
+    f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"3", 'w', 'utf-8')
+    print "Templates:",len(tem_baiduattr_count)
+    for tem, attrs in sorted(tem_baiduattr_count.items()):
+        if len(attrs) > 0:
+            print tem, len(attrs)
+            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+            f.flush()
+            count += 1
+    f.close()
+    print "Templates which have attrs Count:",count
+
 
 if __name__ == "__main__":
     import time
     start = time.time()
-    find_attribute_in_baidu2()
+    find_attribute_in_baidu3()
     print "Time Consuming:", time.time()-start
 

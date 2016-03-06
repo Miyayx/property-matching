@@ -33,13 +33,13 @@ def main():
         try:
             en = domain_dict[tem].wiki_properties[p]
         except:
-           print "domain_dict %s has no wiki property:%s"%(tem, p)
+           print "domain_dict %s has %d properties, no wiki property:%s"%(tem, len(domain_dict[tem].wiki_properties), p)
            continue
         try:
            #print zh_label
            zh = domain_dict[tem].baidu_properties[zh_label]
         except:
-           print "domain_dict %s has no baidu property:%s"%(tem, zh_label)
+           print "domain_dict %s has %d properties, no baidu property:%s"%(tem, len(domain_dict[tem].baidu_properties), zh_label)
            continue
         pos_properties.append((en, zh))
         zh2 = random.sample(domain_dict[tem].baidu_properties.items(), 1)[0][1] #注意这里返回random的是一个item的list
@@ -66,8 +66,11 @@ def main():
     # similar matrix for seeds
     #funs= [domain_similarity, value_similarity] #methods of similarity
     
+    funs = []
     funs = [label_similarity, popular_similarity]
+    funs_cl = [value_similarity2]
     funs_cl = [article_similarity, value_similarity2] #methods of similarity
+
     #funs_cl = [article_similarity] #methods of similarity
     seed_matrix = features.generate_features(seed_properties, funs, funs_cl)
     print seed_matrix
@@ -141,8 +144,8 @@ def main_ins():
     #funs= [domain_similarity, value_similarity] #methods of similarity
     
     funs = [label_similarity, popular_similarity]
-    #funs_cl = [article_similarity, value_similarity] #methods of similarity
     funs_cl = [article_similarity] #methods of similarity
+    funs_cl = [article_similarity, value_similarity] #methods of similarity
     seed_matrix = features.generate_features(seed_properties, funs, funs_cl)
     print seed_matrix
 

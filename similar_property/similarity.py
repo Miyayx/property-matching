@@ -6,6 +6,7 @@
 import math
 import re
 import sys
+import codecs
 
 DATE_PATTERN = re.compile(r'^((?:19|20)?\d{2})[-.]?((?:[0-1]?|1)[0-9])[-.]?((?:[0-3]?|[1-3])[0-9])?$') 
 DATE_PATTERN2 = re.compile(r'[0-9]{2,4}年([0-9]{1,2}月)?([0-9]{1,2}日)?') 
@@ -122,6 +123,8 @@ def label_similarity(p1, p2):
 def article_similarity(p1, p2, cl):
     print "article_similarity"
     n = 0
+    if len(p1.infobox.keys()) == 0 or len(p2.infobox.keys()) == 0:
+        return 0
     p2_articles = set(p2.infobox.keys())
     for a1 in p1.infobox.keys():
         if a1 in cl and cl[a1] in p2_articles:
@@ -156,6 +159,18 @@ def value_similarity(p1, p2, cl):
 def value_similarity2(p1, p2, cl):
     N = 0
     s = 0
+
+    with codecs.open("property-article-value.dat", "a", "utf-8") as fo:
+        p1_list = []
+        for a1, v1 in p1.infobox.iteritems():
+            p1_list.append(a1+"::="+v1)
+        fo.write(p1.label+"\t"+";;;".join(p1_list)+"\n")
+
+        p2_list = []
+        for a2, v2 in p2.infobox.iteritems():
+            p2_list.append(a2+"::="+v2)
+        fo.write(p2.label+"\t"+";;;".join(p2_list)+"\n")
+
     for a1, v1 in p1.infobox.iteritems():
         v2 = None
         if a1 in p2.infobox:
