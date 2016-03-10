@@ -2,6 +2,7 @@
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn import svm
 
 from fileio import *
 
@@ -67,8 +68,12 @@ def main():
     #funs= [domain_similarity, value_similarity] #methods of similarity
     
     funs = []
-    funs = [label_similarity, popular_similarity]
-    funs_cl = [value_similarity2]
+    #funs = [popular_similarity]
+    funs = [label_similarity]
+    #funs = [label_similarity, popular_similarity]
+    funs_cl = []
+    #funs_cl = [value_similarity2]
+    funs_cl = [article_similarity]
     funs_cl = [article_similarity, value_similarity2] #methods of similarity
 
     #funs_cl = [article_similarity] #methods of similarity
@@ -165,13 +170,15 @@ def train_test(seed_matrix, seed_properties, labels):
 
     print "\nLogistic Regression..."
     
-    classifier = LogisticRegression(C=1.0)
+    #classifier = LogisticRegression(C=1.0)
+    classifier = svm.LinearSVC()
     classifier.fit(seed_matrix, labels)
     prediction =  classifier.predict(seed_matrix)
     for i, p in enumerate(seed_properties):
         print p[0].label, p[1].label, prediction[i], labels[i]
         
-    print classifier.score(seed_matrix, labels)
+    print "Presicion:", classifier.score(seed_matrix, labels)
+    print "Recall:", prediction[:len(pos_properties)].count(1)*1.0/len(pos_properties)
     return classifier
 
 
