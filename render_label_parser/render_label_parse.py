@@ -3,6 +3,7 @@
 import json
 import re,os
 import codecs
+import urllib2
 try:
     from urllib.request import urlopen
     from urllib.parse import urlencode
@@ -11,12 +12,14 @@ except ImportError:
     from urllib import urlencode
 
 import mwparserfromhell
+import socks
+import socket
 
-API_URL = "https://en.wikipedia.org/w/api.php"
+API_URL = "https://zh.wikipedia.org/w/api.php"
 
-INPUT = "enwiki-template-name.dat"
-OUTPUT = "enwiki-template-triple-new.dat"
-#OUTPUT = "zhwiki-template-triple-new.dat"
+INPUT = "zhwiki-template-name.dat"
+#OUTPUT = "enwiki-template-triple-new.dat"
+OUTPUT = "zhwiki-template-triple-new.dat"
 
 IF_REGEX = r"{{#if:.+}}"
 THREE_REGEX = r"{{{.+?\|}}}"
@@ -73,7 +76,7 @@ def if_parse(s):
             #print s[i:]
             i += 1
     return result
-            
+
 def render_label_parse(label):
     """
     Examples:
@@ -146,18 +149,36 @@ def template_label_parse(label):
 #print template_label_parse("{{#if:{{{production companies|{{{studio|}}}}}} |<div style'vertical-align:middle;'>{{{production companies|{{{studio|}}}}}}</div>}}")
 
 def clawer(template):
+
+    print 'Clawer', template, '...'
+    req_header = {'User-Agent':'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
+            'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Charset':'ISO-8859-1,utf-8;q=0.7,*;q=0.3',
+            'Referer':None #注意如果依然不能抓取的话，这里可以设置抓取网站的host
+            }
+    req_timeout = 5
+
     data = {"action": "query", "prop": "revisions", "rvlimit": 1,
             "rvprop": "content", "format": "json", "titles": template}
-    raw = urlopen(API_URL, urlencode(data).encode()).read()
+    #raw = urlopen(API_URL, urlencode(data).encode()).read()
+    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, "127.0.0.1", 1085)
+    socket.socket = socks.socksocket
+
+    #proxy = urllib2.ProxyHandler({'http': '127.0.0.1:1085'})
+    #opener = urllib2.build_opener(proxy)
+    #urllib2.install_opener(opener)
+
+    req = urllib2.Request(API_URL, urlencode(data).encode(),req_header)
+    raw = urllib2.urlopen(req).read()
     res = json.loads(raw)
     if not "revisions" in res["query"]["pages"].values()[0]:
         print "No info for", template
         return
-    
+
     text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
     if text.startswith("#REDIRECT"):
         if re.search(LINK_REGEX, text):
-            text = re.findall(LINK_REGEX, text).strip('[[').split(']]').strip()
+            text = re.findall(LINK_REGEX, text)[0].strip('[[').strip(']]').strip()
             print template, "redirect to", text
             return clawer(text)
     return mwparserfromhell.parse(text)
@@ -222,7 +243,7 @@ def read_templates(fn, fo):
         for line in codecs.open(fo, 'r' 'utf-8'):
             have.add(line.strip('\n').split('\t')[0])
         print 'Have parsed',len(have),'templates'
-    
+
     for line in codecs.open(fn, 'r' 'utf-8'):
         t = None
         if line.lower().startswith('template'):
@@ -234,22 +255,22 @@ def read_templates(fn, fo):
         tems.append(t)
     return tems
 
-#parse('Template:infobox film')
+parse('Template:infobox film')
 #parse('Template:infobox person')
 #parse('Template:infobox com')
 
-if __name__ == "__main__":
-
-    templates = read_templates(INPUT, OUTPUT)
-    fw = codecs.open(OUTPUT, 'a', 'utf-8')
-    for t in templates:
-        results = parse(t)
-        if len(results) == 0:
-            fw.write(t+'\n')
-        else:
-            for k, v in sorted(results.iteritems()):
-                fw.write(k+'\t'+v+'\n')
-        fw.flush()
-
-    fw.close()
-
+#if __name__ == "__main__":
+#
+#    templates = read_templates(INPUT, OUTPUT)
+#    fw = codecs.open(OUTPUT, 'a', 'utf-8')
+#    for t in templates:
+#        results = parse(t)
+#        if len(results) == 0:
+#            fw.write(t+'\n')
+#        else:
+#            for k, v in sorted(results.iteritems()):
+#                fw.write(k+'\t'+v+'\n')
+#        fw.flush()
+#
+#    fw.close()
+#
