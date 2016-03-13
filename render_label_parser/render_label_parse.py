@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 
 import json
-import re
+import re,os
 import codecs
 try:
     from urllib.request import urlopen
@@ -153,7 +153,13 @@ def clawer(template):
     if not "revisions" in res["query"]["pages"].values()[0]:
         print "No info for", template
         return
+    
     text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
+    if text.startswith("#REDIRECT"):
+        if re.search(LINK_REGEX, text):
+            text = re.findall(LINK_REGEX, text).strip('[[').split(']]').strip()
+            print template, "redirect to", text
+            return clawer(text)
     return mwparserfromhell.parse(text)
 
 def parse(template):
@@ -207,9 +213,15 @@ def parse(template):
 def read_templates(fn, fo):
     tems = []
     have = set()
-    for line in codecs.open(fo, 'r' 'utf-8'):
-        have.add(line.strip('\n').split('\t')[0])
-    print 'Have parsed',len(have),'templates'
+
+    from shutil import copyfile
+    import time
+    if os.path.isfile(fo):
+        copyfile(fo, fo+'-'+str(time.strftime("%Y-%m-%d %H:%M")))
+
+        for line in codecs.open(fo, 'r' 'utf-8'):
+            have.add(line.strip('\n').split('\t')[0])
+        print 'Have parsed',len(have),'templates'
     
     for line in codecs.open(fn, 'r' 'utf-8'):
         t = None
@@ -227,9 +239,6 @@ def read_templates(fn, fo):
 #parse('Template:infobox com')
 
 if __name__ == "__main__":
-    from shutil import copyfile
-    import time
-    copyfile(OUTPUT, OUTPUT+'-'+str(time.strftime("%Y-%m-%d %H:%M")))
 
     templates = read_templates(INPUT, OUTPUT)
     fw = codecs.open(OUTPUT, 'a', 'utf-8')
