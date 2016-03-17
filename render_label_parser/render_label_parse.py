@@ -15,6 +15,10 @@ import mwparserfromhell
 import socks
 import socket
 
+from StringIO import StringIO
+
+import xml.etree.ElementTree as ET
+
 API_URL = "https://zh.wikipedia.org/w/api.php"
 
 INPUT = "zhwiki-template-name.dat"
@@ -183,10 +187,30 @@ def clawer(template):
             return clawer(text)
     return mwparserfromhell.parse(text)
 
-def parse(template):
+def parse_by_api(template):
+    doc = clawer(template)
+    return parse_doc(template, doc)
+
+def parse_by_dump(doc):
+    utf8_parser = ET.XMLParser(encoding='utf-8')
+    #print doc
+    try:
+        doc = doc.encode('utf-8')
+    except:
+        pass
+    tree = ET.parse(StringIO(doc), parser=utf8_parser)
+    root = tree.getroot()
+    title = root.find(".//title").text
+    revision = root.find(".//revision")
+    text = revision.find(".//text").text
+    if text != None and text.startswith('{{Infobox'):
+        return parse_doc(title, text)
+    else:
+        return None
+
+def parse_doc(template, doc):
     result = {}
 
-    doc = clawer(template)
     if not doc:
         return result
 
@@ -255,7 +279,47 @@ def read_templates(fn, fo):
         tems.append(t)
     return tems
 
-parse('Template:infobox film')
+def read_template_dump(fn):
+    s = ""
+    fr = codecs.open(fn, 'r', 'utf-8')
+    line = fr.readline()
+    while line:
+        if line.startswith('<page>'):
+            s += line
+            line = fr.readline()
+            title = line.strip().strip('<title>').strip('</title>')
+            while not '</page>' in line:
+                s += line
+                line = fr.readline()
+            s += line
+            yield title, s
+
+            s = ""
+        line = fr.readline()
+
+def dump_parse(fn, fo):
+    Tn = not_infobox_Tn = not_have_p_Tn = 0
+    fw = codecs.open(fo, 'w', 'utf-8')
+    for title, doc in read_template_dump(fn):
+        Tn += 1
+        result = parse_by_dump(doc)
+        #if result == None and not title.lower().startswith('template:infobox'):
+        if result == None:
+            not_infobox_Tn += 1
+        elif len(result) == 0:
+            fw.write(title+'\n')
+            not_have_p_Tn += 1
+        else:
+            for k, v in sorted(result.iteritems()):
+                fw.write(k+'\t'+v+'\n')
+        fw.flush()
+
+    print "Template Total:", Tn
+    print "Infobox Template:", Tn - not_infobox_Tn
+    print "Have Property Infobox Template", Tn - not_infobox_Tn - not_have_p_Tn
+
+
+#parse('Template:infobox film')
 #parse('Template:infobox person')
 #parse('Template:infobox com')
 
@@ -264,13 +328,25 @@ parse('Template:infobox film')
 #    templates = read_templates(INPUT, OUTPUT)
 #    fw = codecs.open(OUTPUT, 'a', 'utf-8')
 #    for t in templates:
-#        results = parse(t)
-#        if len(results) == 0:
+#        result = parse(t)
+#         if result == None:  #不是infobox template
+#             pass
+#        if len(result) == 0:
 #            fw.write(t+'\n')
 #        else:
-#            for k, v in sorted(results.iteritems()):
+#            for k, v in sorted(result.iteritems()):
 #                fw.write(k+'\t'+v+'\n')
 #        fw.flush()
 #
 #    fw.close()
-#
+
+if __name__ == "__main__":
+    import sys
+    import time
+    start = time.time()
+    if len(sys.argv) < 2:
+        print "not input and output filename"
+        exit()
+    dump_parse(sys.argv[1], sys.argv[2])
+    print 'Time Consuming:',time.time()-start
+
