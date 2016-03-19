@@ -11,13 +11,27 @@ except ImportError:
     from urllib import urlopen
     from urllib import urlencode
 
-import mwparserfromhell
+#import mwparserfromhell
 import socks
 import socket
 
 from StringIO import StringIO
 
 import xml.etree.ElementTree as ET
+
+from hanziconv import HanziConv
+
+"""
+通过给的template list， 从网页中爬取， 或从dump文件中抽取显示label
+
+"""
+
+class TemplateType:
+    OTHER = 0
+    INFOBOX = 1
+    EXTENSION = 2
+    TABLE = 3
+    REDIRECT = 4
 
 API_URL = "https://zh.wikipedia.org/w/api.php"
 
@@ -26,7 +40,7 @@ INPUT = "zhwiki-template-name.dat"
 OUTPUT = "zhwiki-template-triple-new.dat"
 
 IF_REGEX = r"{{#if:.+}}"
-THREE_REGEX = r"{{{.+?\|}}}"
+THREE_REGEX = r"{{{.+?}}}"
 LONGITEM_REGEX = r"{{longitem.+}}"
 NOWRAP_REGEX = r'{{nowrap\|(.+)}}'
 SPAN_REGEX = r'\<span.+?\>(.+)\</span\>'
@@ -135,7 +149,9 @@ def template_label_parse(label):
     Examples:
     {{{based_on|{{{based on|}}}}}}
     {{#if:{{{production companies|{{{studio|}}}}}} |<div style"vertical-align:middle;">{{{production companies|{{{studio|}}}}}}</div>}}
+    {{{weapon<includeonly>|</includeonly>}}}
     """
+    label = label.replace('<includeonly>','').replace('</includeonly>','')
     labels = set()
     if re.search(THREE_REGEX, label):
         threes = re.findall(THREE_REGEX, label)
@@ -191,7 +207,21 @@ def parse_by_api(template):
     doc = clawer(template)
     return parse_doc(template, doc)
 
-def parse_by_dump(doc):
+def template_type(text):
+    if text != None:
+        firstline = text.lower().split('\n')[0].strip('\n').strip()
+        if firstline.endswith('{{infobox'):
+            print text.lower().split('\n')[0]
+            return TemplateType.INFOBOX
+        elif '{{infobox' in firstline:
+            print text.lower().split('\n')[0]
+            return TemplateType.EXTENSION
+        else:
+            return TemplateType.OTHER
+    else:
+        return TemplateType.OTHER
+
+def parse_by_dump(doc, ttype=TemplateType.INFOBOX):
     utf8_parser = ET.XMLParser(encoding='utf-8')
     #print doc
     try:
@@ -203,10 +233,16 @@ def parse_by_dump(doc):
     title = root.find(".//title").text
     revision = root.find(".//revision")
     text = revision.find(".//text").text
-    if text != None and text.startswith('{{Infobox'):
-        return parse_doc(title, text)
+    ttype = template_type(text)
+    if ttype == TemplateType.INFOBOX or ttype == TemplateType.EXTENSION:
+        return ttype, parse_doc(title, text)
+    elif ttype == TemplateType.TABLE: 
+        return ttype, parse_table(title, text)
     else:
-        return None
+        return ttype, {}
+
+def parse_table(template, doc):
+    pass
 
 def parse_doc(template, doc):
     result = {}
@@ -219,7 +255,7 @@ def parse_doc(template, doc):
     rl = tl = None
     n = "0"
     while i < len(lines):
-        line = lines[i]
+        line = lines[i].strip()
         if line.startswith('|'):
             line = line.strip().strip('|').strip()
 
@@ -241,13 +277,13 @@ def parse_doc(template, doc):
                 tl = tl.strip('\t').strip()
                 m = re.findall(r'\d+', label)[0]
                 if n == m:
-                    print '&'*10
+                    #print '&'*10
                     #print tl
                     #print rl
                     RL = render_label_parse(rl)
                     TLS = template_label_parse(tl)
                     for TL in TLS:
-                        print template + '\t' + TL + '\t' + RL
+                        #print template + '\t' + TL + '\t' + RL
                         result[template+'\t'+TL] = RL
                 else:
                     n = 0
@@ -287,7 +323,7 @@ def read_template_dump(fn):
         if line.startswith('<page>'):
             s += line
             line = fr.readline()
-            title = line.strip().strip('<title>').strip('</title>')
+            title = line.strip().replace('<title>','').replace('</title>','')
             while not '</page>' in line:
                 s += line
                 line = fr.readline()
@@ -299,29 +335,57 @@ def read_template_dump(fn):
 
 def dump_parse(fn, fo):
     Tn = not_infobox_Tn = not_have_p_Tn = 0
+    extensions = set()
+    tables = set()
+    infoboxes = set()
+    redirect = dict()
     fw = codecs.open(fo, 'w', 'utf-8')
+    fw2 = codecs.open('no_property_infobox_template', 'w', 'utf-8')
     for title, doc in read_template_dump(fn):
         Tn += 1
-        result = parse_by_dump(doc)
-        #if result == None and not title.lower().startswith('template:infobox'):
-        if result == None:
+        ttype, result = parse_by_dump(doc)
+        if ttype == TemplateType.OTHER:
             not_infobox_Tn += 1
+            continue
+        elif ttype == TemplateType.REDIRECT:
+            redirect[title] = result
+            continue
         elif len(result) == 0:
-            fw.write(title+'\n')
+            #fw.write(title+'\n')
+            fw2.write(HanziConv.toSimplified(title)+'\n')
             not_have_p_Tn += 1
         else:
             for k, v in sorted(result.iteritems()):
+                k = HanziConv.toSimplified(k)
+                v = HanziConv.toSimplified(v)
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
+
+        if ttype == TemplateType.EXTENSION:
+            extensions.add(title)
+            #extension += 1
+        elif ttype == TemplateType.TABLE:
+            tables.add(title)
+            #table += 1
+        elif ttype == TemplateType.INFOBOX:
+            infoboxes.add(title)
+            #infobox += 1
 
     print "Template Total:", Tn
     print "Infobox Template:", Tn - not_infobox_Tn
     print "Have Property Infobox Template", Tn - not_infobox_Tn - not_have_p_Tn
+    print "Infobox:", len(infoboxes)
+    print "Extension:", len(extensions)
+    print "Table:", len(tables)
+    print "Redirect:", len(redirect)
 
+    fw.close()
+    fw2.close()
 
 #parse('Template:infobox film')
 #parse('Template:infobox person')
 #parse('Template:infobox com')
+#parse_by_api('Template:Infobox 最終幻想角色')
 
 #if __name__ == "__main__":
 #
