@@ -46,6 +46,7 @@ NOWRAP_REGEX = r'{{nowrap\|(.+)}}'
 SPAN_REGEX = r'\<span.+?\>(.+)\</span\>'
 COMMENT_REGEX = r'\<!--.+-\>'
 LINK_REGEX = r'\[\[.+\]\]'
+REDIRECT_REGEX = ur'#(?:REDIRECT|重定向).*\[\[(.+?)\]\]'
 
 def if_parse(s):
     stack = []
@@ -209,19 +210,29 @@ def parse_by_api(template):
 
 def template_type(text):
     if text != None:
-        firstline = text.lower().split('\n')[0].strip('\n').strip()
-        if firstline.endswith('{{infobox'):
-            print text.lower().split('\n')[0]
+        firstline = text.lower().split('\n')[0].strip('\n').strip().replace(' ','')
+
+        secondline = None
+        if len(text.split('\n')) > 1:
+            secondline = text.lower().split('\n')[1].strip('\n').strip().replace(' ','')
+
+        if firstline.endswith('{{infobox') or (secondline and secondline.endswith('{{infobox')):
+            #print text.lower().split('\n')[0]
             return TemplateType.INFOBOX
-        elif '{{infobox' in firstline:
-            print text.lower().split('\n')[0]
+        elif '{{infobox' in firstline or (secondline and '{{infobox' in secondline):
+            #print text.lower().split('\n')[0]
             return TemplateType.EXTENSION
+        elif re.search(REDIRECT_REGEX, text.strip()):
+            return TemplateType.REDIRECT
         else:
             return TemplateType.OTHER
     else:
         return TemplateType.OTHER
 
-def parse_by_dump(doc, ttype=TemplateType.INFOBOX):
+def parse_redirect(title, doc):
+    return {title : re.findall(REDIRECT_REGEX, doc)[0]}
+
+def parse_by_dump(doc):
     utf8_parser = ET.XMLParser(encoding='utf-8')
     #print doc
     try:
@@ -230,7 +241,7 @@ def parse_by_dump(doc, ttype=TemplateType.INFOBOX):
         pass
     tree = ET.parse(StringIO(doc), parser=utf8_parser)
     root = tree.getroot()
-    title = root.find(".//title").text
+    title = root.find(".//title").text.strip()
     revision = root.find(".//revision")
     text = revision.find(".//text").text
     ttype = template_type(text)
@@ -238,6 +249,8 @@ def parse_by_dump(doc, ttype=TemplateType.INFOBOX):
         return ttype, parse_doc(title, text)
     elif ttype == TemplateType.TABLE: 
         return ttype, parse_table(title, text)
+    elif ttype == TemplateType.REDIRECT:
+        return ttype, parse_redirect(title, text)
     else:
         return ttype, {}
 
@@ -333,7 +346,7 @@ def read_template_dump(fn):
             s = ""
         line = fr.readline()
 
-def dump_parse(fn, fo):
+def dump_parse(fn, fo, redirect_fn):
     Tn = not_infobox_Tn = not_have_p_Tn = 0
     extensions = set()
     tables = set()
@@ -348,7 +361,8 @@ def dump_parse(fn, fo):
             not_infobox_Tn += 1
             continue
         elif ttype == TemplateType.REDIRECT:
-            redirect[title] = result
+            not_infobox_Tn += 1
+            redirect.update(result)
             continue
         elif len(result) == 0:
             #fw.write(title+'\n')
@@ -381,6 +395,16 @@ def dump_parse(fn, fo):
 
     fw.close()
     fw2.close()
+    re_fw = codecs.open(redirect_fn, 'w', 'utf-8') 
+    for k, v in redirect.iteritems():
+        if v in extensions or v in tables or v in infoboxes:
+            #只记录infobox template的redirect信息
+            try:
+                re_fw.write(HanziConv.toSimplified(k)+'\t'+HanziConv.toSimplified(v)+'\n')
+            except:
+                print k,v
+                pass
+    re_fw.close()
 
 #parse('Template:infobox film')
 #parse('Template:infobox person')
@@ -411,6 +435,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print "not input and output filename"
         exit()
-    dump_parse(sys.argv[1], sys.argv[2])
+    dump_parse(sys.argv[1], sys.argv[2], sys.argv[3])
     print 'Time Consuming:',time.time()-start
 

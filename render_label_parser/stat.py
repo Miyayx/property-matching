@@ -19,22 +19,27 @@ def notuse_template(all_t_fn, used_t_fn, extracted_t_fn):
     for t in sorted(used_but_not_extracted):
         print t
 
-def previous_compare(previous_fn, curr_fn):
+def previous_compare(previous_fn, curr_fn, redirect_fn):
     prev_t = set([line.split('\t')[0] for line in open(previous_fn)])
     curr_t = set([line.split('\t')[0] for line in open(curr_fn) if len(line.split('\t')) > 1])
+    redirect_t = dict((line.strip('\n').split('\t')) for line in open(redirect_fn))
+    redirect_curr_t = set()
+    redirect_n = 0
 
     for t in sorted(prev_t-curr_t):
-        print t
+        if t in redirect_t and redirect_t[t] in curr_t:
+            redirect_n += 1
+            redirect_curr_t.add(redirect_t[t])
+        else:
+            print t
 
     print "Previous Templates",len(prev_t)
     print "Current Templates", len(curr_t)
-    print "Previous templates not extract this time", len(prev_t - curr_t)
-    print "new extracted ones", len(curr_t - prev_t)
+    print "Previous templates not extract this time", len(prev_t - curr_t) - redirect_n
+    print "new extracted ones", len(curr_t - prev_t - redirect_curr_t)
 
 if __name__=="__main__":
     #notuse_template("/data/xlore20160223/wikiExtractResult/zhwiki-template-name.dat", "/data/xlore20160223/Template/zhwiki-infobox-template.dat", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat" )
-    previous_compare("/data/xlore20160223/Template/old/zhwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat")
+    previous_compare("/data/xlore20160223/Template/old/zhwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat", "/data/xlore20160223/Template/zhwiki-template-redirect.dat")
 
     
-
-
