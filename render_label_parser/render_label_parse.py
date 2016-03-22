@@ -25,6 +25,10 @@ from hanziconv import HanziConv
 通过给的template list， 从网页中爬取， 或从dump文件中抽取显示label
 
 """
+import logging
+logging.basicConfig(filename='render_label.log', filemode='a', level=logging.INFO)
+logging.info('\n')
+logging.info(datetime.now())
 
 class TemplateType:
     OTHER = 0
@@ -408,13 +412,13 @@ def dump_parse(fn, fo, redirect_fn):
             infoboxes.add(title)
             #infobox += 1
 
-    print "Template Total:", Tn
-    print "Infobox Template:", Tn - not_infobox_Tn
-    print "Have Property Infobox Template", Tn - not_infobox_Tn - not_have_p_Tn
-    print "Infobox:", len(infoboxes)
-    print "Extension:", len(extensions)
-    print "Table:", len(tables)
-    print "Redirect:", len(redirect)
+    logging.info("Template Total: %d"%Tn)
+    logging.info("Infobox Template: %d"%(Tn - not_infobox_Tn))
+    logging.info("Have Property Infobox Template: %d"%(Tn - not_infobox_Tn - not_have_p_Tn))
+    logging.info("Infobox: %d"%len(infoboxes))
+    logging.info("Extension: %d"%len(extensions))
+    logging.info("Table:%d"%len(tables))
+    logging.info("Redirect:%d"%len(redirect))
 
     fw.close()
     fw2.close()

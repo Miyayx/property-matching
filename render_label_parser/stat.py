@@ -1,5 +1,10 @@
 # -*- coding:utf-8 -*-
 
+import sys
+sys.path.append('..')
+from utils.logger import *
+initialize_logger('./stat.log')
+
 def notuse_template(all_t_fn, used_t_fn, extracted_t_fn):
     all_t = set([line.strip('\n') for line in open(all_t_fn)])
     used_t = set(['Template:'+line.strip('\n') for line in open(used_t_fn)])
@@ -10,12 +15,12 @@ def notuse_template(all_t_fn, used_t_fn, extracted_t_fn):
     used_but_not_in_list = used_t - all_t
     used_but_not_extracted = used_t - extracted_t
 
-    print "Common:", len(common)
-    print "Used", len(used_t)
-    print "Not used", len(not_used)
-    print "Used but not in list", len(used_but_not_in_list)
-    print "Extracted", len(extracted_t)
-    print "Used but not extracted", len(used_but_not_extracted)
+    logging.info("Common: %d"%len(common))
+    logging.info("Used: %d"%len(used_t))
+    logging.info("Not used : %d"%len(not_used))
+    logging.info("Used but not in list: %d"%len(used_but_not_in_list))
+    logging.info("Extracted %s"%len(extracted_t))
+    logging.info("Used but not extracted %d\n"%len(used_but_not_extracted))
     #for t in sorted(used_but_not_extracted):
     #    print t
 
@@ -33,15 +38,16 @@ def previous_compare(previous_fn, curr_fn, redirect_fn):
         else:
             print t
 
-    print "Previous Templates",len(prev_t)
-    print "Current Templates", len(curr_t)
-    print "Previous templates not extract this time", len(prev_t - curr_t) - redirect_n
-    print "new extracted ones", len(curr_t - prev_t - redirect_curr_t)
+    logging.info("Previous Templates %d"%len(prev_t))
+    logging.info("Current Templates: %d"%len(curr_t))
+    logging.info("Redirect Templates: %d"%redirect_n)
+    logging.info("Previous templates not extract this time: %d"%(len(prev_t - curr_t) - redirect_n))
+    logging.info("new extracted ones %d\n"%len(curr_t - prev_t - redirect_curr_t))
 
 if __name__=="__main__":
-    notuse_template("/data/xlore20160223/wikiExtractResult/zhwiki-template-name.dat", "/data/xlore20160223/Template/zhwiki-infobox-template.dat", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat" )
+    #notuse_template("/data/xlore20160223/wikiExtractResult/zhwiki-template-name.dat", "/data/xlore20160223/Template/zhwiki-infobox-template.dat", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat" )
     #previous_compare("/data/xlore20160223/Template/old/zhwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat", "/data/xlore20160223/Template/zhwiki-template-redirect.dat")
     #notuse_template("/data/xlore20160223/wikiExtractResult/enwiki-template-name.dat", "/data/xlore20160223/Template/enwiki-infobox-template.dat", "/data/xlore20160223/Template/enwiki-20160305-template-triple.dat" )
-    #previous_compare("/data/xlore20160223/Template/old/enwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/enwiki-20160203-template-triple.dat", "/data/xlore20160223/Template/enwiki-template-redirect.dat")
+    previous_compare("/data/xlore20160223/Template/old/enwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/enwiki-20160305-template-triple.dat", "/data/xlore20160223/Template/enwiki-template-redirect.dat")
 
     
