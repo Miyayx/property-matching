@@ -48,6 +48,11 @@ COMMENT_REGEX = r'\<!--.+-\>'
 LINK_REGEX = r'\[\[.+\]\]'
 REDIRECT_REGEX = ur'#(?:REDIRECT|重定向).*\[\[(.+?)\]\]'
 
+def convert_to_simplified(text):
+    if u'歷' in text:
+        text = text.replace(u'歷', u'历')
+    return HanziConv.toSimplified(text)
+
 def if_parse(s):
     stack = []
     result = {}
@@ -208,7 +213,22 @@ def parse_by_api(template):
     doc = clawer(template)
     return parse_doc(template, doc)
 
-def template_type(text):
+def template_type(doc):
+    utf8_parser = ET.XMLParser(encoding='utf-8')
+    #print doc
+    try:
+        doc = doc.encode('utf-8')
+    except:
+        pass
+    tree = ET.parse(StringIO(doc), parser=utf8_parser)
+    root = tree.getroot()
+    title = root.find(".//title").text.strip()
+    redirect = root.find(".//redirect")
+    if not redirect == None:
+        return TemplateType.REDIRECT
+    revision = root.find(".//revision")
+    text = revision.find(".//text").text
+
     if text != None:
         firstline = text.lower().split('\n')[0].strip('\n').strip().replace(' ','')
 
@@ -216,21 +236,23 @@ def template_type(text):
         if len(text.split('\n')) > 1:
             secondline = text.lower().split('\n')[1].strip('\n').strip().replace(' ','')
 
-        if firstline.endswith('{{infobox') or (secondline and secondline.endswith('{{infobox')):
+        if firstline.endswith('{{infobox') or firstline.endswith(u'{{艺人') or '{{infobox\n'in text or (secondline and secondline.endswith('{{infobox')):
             #print text.lower().split('\n')[0]
             return TemplateType.INFOBOX
         elif '{{infobox' in firstline or (secondline and '{{infobox' in secondline):
             #print text.lower().split('\n')[0]
             return TemplateType.EXTENSION
-        elif re.search(REDIRECT_REGEX, text.strip()):
-            return TemplateType.REDIRECT
+        #elif re.search(REDIRECT_REGEX, text.strip()):
+        #    return TemplateType.REDIRECT
         else:
             return TemplateType.OTHER
     else:
         return TemplateType.OTHER
 
 def parse_redirect(title, doc):
-    return {title : re.findall(REDIRECT_REGEX, doc)[0]}
+    redirect = re.findall(REDIRECT_REGEX, doc)[0]
+    redirect = redirect.replace('template','Template').replace('_',' ')
+    return {title : redirect}
 
 def parse_by_dump(doc):
     utf8_parser = ET.XMLParser(encoding='utf-8')
@@ -242,15 +264,16 @@ def parse_by_dump(doc):
     tree = ET.parse(StringIO(doc), parser=utf8_parser)
     root = tree.getroot()
     title = root.find(".//title").text.strip()
+    redirect = root.find(".//redirect")
     revision = root.find(".//revision")
     text = revision.find(".//text").text
-    ttype = template_type(text)
+    ttype = template_type(doc)
     if ttype == TemplateType.INFOBOX or ttype == TemplateType.EXTENSION:
         return ttype, parse_doc(title, text)
     elif ttype == TemplateType.TABLE: 
         return ttype, parse_table(title, text)
     elif ttype == TemplateType.REDIRECT:
-        return ttype, parse_redirect(title, text)
+        return ttype, {title: redirect.get('title')}
     else:
         return ttype, {}
 
@@ -366,12 +389,12 @@ def dump_parse(fn, fo, redirect_fn):
             continue
         elif len(result) == 0:
             #fw.write(title+'\n')
-            fw2.write(HanziConv.toSimplified(title)+'\n')
+            fw2.write(convert_to_simplified(title)+'\n')
             not_have_p_Tn += 1
         else:
             for k, v in sorted(result.iteritems()):
-                k = HanziConv.toSimplified(k)
-                v = HanziConv.toSimplified(v)
+                k = convert_to_simplified(k)
+                v = convert_to_simplified(v)
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
 
@@ -400,7 +423,7 @@ def dump_parse(fn, fo, redirect_fn):
         if v in extensions or v in tables or v in infoboxes:
             #只记录infobox template的redirect信息
             try:
-                re_fw.write(HanziConv.toSimplified(k)+'\t'+HanziConv.toSimplified(v)+'\n')
+                re_fw.write(convert_to_simplified(k)+'\t'+convert_to_simplified(v)+'\n')
             except:
                 print k,v
                 pass
@@ -429,12 +452,18 @@ def dump_parse(fn, fo, redirect_fn):
 #    fw.close()
 
 if __name__ == "__main__":
+    """
+    1. template dump
+    2. template-triple
+    3. template-redirect
+    """
     import sys
     import time
     start = time.time()
     if len(sys.argv) < 2:
         print "not input and output filename"
         exit()
+
     dump_parse(sys.argv[1], sys.argv[2], sys.argv[3])
     print 'Time Consuming:',time.time()-start
 
