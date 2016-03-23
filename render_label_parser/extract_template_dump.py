@@ -21,6 +21,9 @@ def extract_template_dump(fi):
     while line:
         if re.search(TITLE_REGEX, line):
             title = re.findall(TITLE_REGEX, line)[0].strip()
+            if title.startswith('Template:PRC admin/'):
+                line = fr.readline()
+                continue
             if title.startswith('Template:') or title.startswith('模板'):
                 print "Recording "+title+"..."
                 n += 1
