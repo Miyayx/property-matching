@@ -20,15 +20,16 @@ from StringIO import StringIO
 import xml.etree.ElementTree as ET
 
 from hanziconv import HanziConv
+import mwparserfromhell
 
 """
 通过给的template list， 从网页中爬取， 或从dump文件中抽取显示label
 
 """
-import logging
-logging.basicConfig(filename='render_label.log', filemode='a', level=logging.INFO)
-logging.info('\n')
-logging.info(datetime.now())
+import sys
+sys.path.append('..')
+from utils.logger import *
+initialize_logger('./render_label.log')
 
 class TemplateType:
     OTHER = 0
@@ -45,12 +46,18 @@ OUTPUT = "zhwiki-template-triple-new.dat"
 
 IF_REGEX = r"{{#if:.+}}"
 THREE_REGEX = r"{{{.+?}}}"
+THREE_CONTAIN_REGEX = r"{{{(.+?)}}}"
+THREE_QUOTATION = r"'''(.+?)'''"
 LONGITEM_REGEX = r"{{longitem.+}}"
 NOWRAP_REGEX = r'{{nowrap\|(.+)}}'
 SPAN_REGEX = r'\<span.+?\>(.+)\</span\>'
 COMMENT_REGEX = r'\<!--.+-\>'
 LINK_REGEX = r'\[\[.+\]\]'
 REDIRECT_REGEX = ur'#(?:REDIRECT|重定向).*\[\[(.+?)\]\]'
+#TH_REGEX = r'\<th.*?\>(.+?)\</th\>'
+TH_REGEX = r'\<th.*?\>(.+?)\</'
+TD_REGEX = r'\<td.*?\>(.+?)\</td\>'
+TD_THREE_REGEX = r'\<td.*?\>{{{(.+?)}}}\</td\>'
 
 def convert_to_simplified(text):
     if u'歷' in text:
@@ -162,6 +169,7 @@ def template_label_parse(label):
     {{{weapon<includeonly>|</includeonly>}}}
     """
     label = label.replace('<includeonly>','').replace('</includeonly>','')
+    label = clear_label(label)
     labels = set()
     if re.search(THREE_REGEX, label):
         threes = re.findall(THREE_REGEX, label)
@@ -175,6 +183,14 @@ def template_label_parse(label):
                 #    continue
                 labels.add(i)
     return labels
+
+def clear_label(label):
+    label = label.replace('</noinclude>', '').replace('<noinclude>', '')
+    label = label.replace('<includeonly>', '').replace('</includeonly>','')
+    nowrap = re.search(r'{{nowrap|.+?}}', label)
+    if nowrap:
+        label = label.replace(re.findall(r'{{nowrap|.+?}}', label)[0], re.findall(r'{{nowrap|(.+?)}}', label)[0])
+    return label
 
 #print template_label_parse("{{#if:{{{production companies|{{{studio|}}}}}} |<div style'vertical-align:middle;'>{{{production companies|{{{studio|}}}}}}</div>}}")
 
@@ -246,6 +262,8 @@ def template_type(doc):
         elif '{{infobox' in firstline or (secondline and '{{infobox' in secondline):
             #print text.lower().split('\n')[0]
             return TemplateType.EXTENSION
+        elif 'class="infobox' in firstline or (secondline and 'class="infobox' in secondline):
+            return TemplateType.TABLE
         #elif re.search(REDIRECT_REGEX, text.strip()):
         #    return TemplateType.REDIRECT
         else:
@@ -282,7 +300,89 @@ def parse_by_dump(doc):
         return ttype, {}
 
 def parse_table(template, doc):
-    pass
+    """
+    https://zh.wikipedia.org/w/index.php?title=Template:Infobox_%E8%88%AA%E7%A9%BA%E5%99%A8&action=edit
+    https://zh.wikipedia.org/w/index.php?title=Template:%E5%93%88%E5%88%A9%C2%B7%E6%B3%A2%E7%89%B9%E4%BA%BA%E7%89%A9&action=edit
+    https://zh.wikipedia.org/w/index.php?title=Template:Infobox_lake&action=edit
+    """
+    result = {}
+
+    if not doc:
+        return result
+
+    wikicode = mwparserfromhell.parse(doc)
+    templates = wikicode.filter_templates()
+    for line in templates:
+        line = line.replace('\n','')
+        #print line
+        if line.startswith('{{#if:') and re.search(THREE_QUOTATION, line):
+            #  #if:{{{designer|}}}|<tr><td style="text-align:right;">'''設計者'''</td><td>{{{designer}}}</td></tr>
+            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            if not tls:
+                print "not:", line
+                continue
+            tl = tls[0]
+            tl = clear_label(tl).strip('|')
+            rl = re.findall(THREE_QUOTATION, line)[0]
+            result[template+'\t'+tl] = rl
+            print tl, rl
+        elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<th' in line:
+            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            if not tls:
+                print "not:", line
+                continue
+            tl = tls[0]
+            tl = clear_label(tl).strip('|')
+            rl = re.findall(TH_REGEX, line)[0].strip().strip(u'：').strip(u':')
+            result[template+'\t'+tl] = rl
+            print tl, rl
+        elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<td' in line:
+            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            if not tls:
+                print "not:", line
+                continue
+            tl = tls[0]
+            tl = clear_label(tl).strip('|')
+            rls = re.findall(TD_THREE_REGEX, line)
+            if rls:
+                rl = rls[0]
+                result[template+'\t'+tl] = rl
+                print tl, rl
+            else:
+                rls = re.findall(TD_REGEX, line)
+                if rls:
+                    rl = rls[0]
+                    result[template+'\t'+tl] = rl
+                    print tl, rl
+        elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '! ' in line:
+            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            if not tls:
+                print "not:", line
+                continue
+            tl = tls[0]
+            tl = clear_label(tl).split('|')[0]
+            print line
+            rls = re.findall(r'!\s(.+?){{!}}', line)
+            if rls:
+                rl = rls[0].strip()
+                result[template+'\t'+tl] = rl
+                print tl, rl
+
+    if len(result) == 0:
+        lines = doc.split('\n')
+        i = 0 
+        rl = tl = None
+        while i < len(lines):
+            line = lines[i].strip()
+            if re.search(THREE_QUOTATION, line) and re.search(THREE_REGEX, line):
+                TL = re.findall(THREE_CONTAIN_REGEX, line)[0]
+                TL = clear_label(TL).strip('|')
+                RL = re.findall(THREE_QUOTATION, line)[0]
+                result[template+'\t'+TL] = RL
+                print TL, RL
+            i += 1
+
+    return result
 
 def parse_doc(template, doc):
     result = {}
@@ -298,7 +398,7 @@ def parse_doc(template, doc):
         line = lines[i].strip()
         if line.startswith('|'):
             line = line.strip().strip('|').strip()
-
+            print line
             if (line.startswith('label') or line.startswith('header')) and '=' in line:
                 label, rl = line.split('=', 1)
                 if not re.search(r'\d+', label):
@@ -326,7 +426,7 @@ def parse_doc(template, doc):
                         #print template + '\t' + TL + '\t' + RL
                         result[template+'\t'+TL] = RL
                 else:
-                    n = 0
+                    n = "0"
                     rl = tl = None
         i += 1
     return result
@@ -381,6 +481,8 @@ def dump_parse(fn, fo, redirect_fn):
     redirect = dict()
     fw = codecs.open(fo, 'w', 'utf-8')
     fw2 = codecs.open('no_property_infobox_template', 'w', 'utf-8')
+    fw_infobox = codecs.open('no_property_infobox_template_infobox', 'w', 'utf-8')
+    fw_table = codecs.open('no_property_infobox_template_table', 'w', 'utf-8')
     for title, doc in read_template_dump(fn):
         Tn += 1
         ttype, result = parse_by_dump(doc)
@@ -393,11 +495,17 @@ def dump_parse(fn, fo, redirect_fn):
             continue
         elif len(result) == 0:
             #fw.write(title+'\n')
-            fw2.write(convert_to_simplified(title)+'\n')
+            if ttype == TemplateType.INFOBOX:
+                fw_infobox.write(title+'\n')
+            elif ttype == TemplateType.TABLE:
+                fw_table.write(title+'\n')
+            else:
+                fw2.write(title+'\n')
+            
             not_have_p_Tn += 1
         else:
             for k, v in sorted(result.iteritems()):
-                k = convert_to_simplified(k)
+                #k = convert_to_simplified(k)
                 v = convert_to_simplified(v)
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
@@ -422,6 +530,9 @@ def dump_parse(fn, fo, redirect_fn):
 
     fw.close()
     fw2.close()
+    fw_infobox.close()
+    fw_table.close()
+
     re_fw = codecs.open(redirect_fn, 'w', 'utf-8') 
     for k, v in redirect.iteritems():
         if v in extensions or v in tables or v in infoboxes:
