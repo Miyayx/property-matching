@@ -22,20 +22,38 @@ def template_replace(a_tem, tem_redirect, tems):
             print tem,'-->',ntem
     return a_tem
 
-def template_coverage(tem_triple, a_tem, tem_redirect):
+def article_coverage(tem_triple, a_tem, tem_redirect):
     count = 0
     tems = tem_triple.keys()
-    fw = codecs.open('not_cover_template.dat', 'w', 'utf-8')
     for tem in a_tem.values():
         if tem in tems:
             count += 1
+
+    logging.info("Articles: %d"%len(a_tem.keys()))
+    logging.info("Hit: %d"%count)
+    logging.info("Article coverage: %f\n"%(count*1.0/len(a_tem.values())))
+
+def template_coverage(tem_triple, a_tem, tem_redirect):
+    tems = tem_triple.keys()
+    infobox_tems = set()
+    not_cover = set()
+    fw = codecs.open(WIKI+'-not_cover_template.dat', 'w', 'utf-8')
+    for tem in a_tem.values():
+        if tem in tems:
+            infobox_tems.add(tem)
         else:
-            fw.write(tem+'\n')
+            not_cover.add(tem)
+
+    for t in sorted(not_cover):
+        fw.write(t+'\n')
     fw.close()
 
-    logging.info("Template: %d"%len(a_tem.values()))
-    logging.info("Hit: %d"%count))
-    logging.info("Template coverage: %f\n"%(count*1.0/len(a_tem.values())))
+    s = len(infobox_tems)+len(not_cover)
+    hit = len(infobox_tems)
+    logging.info("wiki-infobox Template: %d"%(s))
+    logging.info("Parsed Infobox Template: %d"%(len(tems)))
+    logging.info("Hit: %d"%hit)
+    logging.info("Template coverage: %f\n"%(hit*1.0/s))
 
 def infobox_coverage(tem_triple, a_tem, a_infobox):
 
@@ -64,14 +82,22 @@ def infobox_replace(tem_triple, a_tem, a_infobox):
     
 
 if __name__=="__main__":
+    import time
+    start = time.time()
+
     DIR = "/data/xlore20160223"
-    #tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
-    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
-    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
-    tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
-    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
-    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
+    global WIKI
+    WIKI = "enwiki"
+    tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
+    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
+    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
+    #tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
+    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
+    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
     a_tem = template_replace(a_tem, tem_redirect, a_tem.values())
     template_coverage(tem_triple, a_tem, tem_redirect)
     infobox_coverage(tem_triple, a_tem, a_infobox)
+    article_coverage(tem_triple, a_tem, a_infobox)
+
+    print 'Time Consuming:',time.time()-start
     

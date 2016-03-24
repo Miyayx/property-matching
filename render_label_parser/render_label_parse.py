@@ -46,10 +46,11 @@ OUTPUT = "zhwiki-template-triple-new.dat"
 
 IF_REGEX = r"{{#if:.+}}"
 THREE_REGEX = r"{{{.+?}}}"
-THREE_CONTAIN_REGEX = r"{{{(.+?)}}}"
+THREE_IN_REGEX = r"{{{(.+?)}}}"
 THREE_QUOTATION = r"'''(.+?)'''"
 LONGITEM_REGEX = r"{{longitem.+}}"
-NOWRAP_REGEX = r'{{nowrap\|(.+)}}'
+NOWRAP_IN_REGEX = r'{{nowrap\|(.+)}}'
+NOWRAP_REGEX = r'{{nowrap\|.+}}'
 SPAN_REGEX = r'\<span.+?\>(.+)\</span\>'
 COMMENT_REGEX = r'\<!--.+-\>'
 LINK_REGEX = r'\[\[.+\]\]'
@@ -122,34 +123,47 @@ def render_label_parse(label):
     {{#if:{{{burial_place|}}}|Burial place|Resting place}}
     Parent{{#if:{{{parents|}}}|(s)|{{#if:{{{father|}}}|{{#if:{{{mother|}}}|s|(s)}}|(s)}}}}
     Predecessor{{#if:{{{predecessors|}}}|s}}
-
+    {{#if:{{{engineering_head_position|{{{Engineering Head position|}}}}}}|{{{engineering_head|{{{Engineering Head|}}}}}}}}
     """
     #print 'Parsing', label, '...'
-    if re.match(LONGITEM_REGEX, label): #从头匹配
-        label = label.strip('{{').strip('}}').strip().split('|', 1)[1] #删除longitem部分
-    if re.search(IF_REGEX, label):
-        IFs = re.findall(IF_REGEX, label)
-        for IF in IFs:
-            suffixes = if_parse(IF)
-            if len(suffixes) > 0:
-                suffix = suffixes.values()[0] #这也只能选一个
-            else:
-                suffix = ''
-            label = label.replace(IF, suffix)
+    #if re.match(LONGITEM_REGEX, label): #从头匹配
+    #    label = label.strip('{{').strip('}}').strip().split('|', 1)[1] #删除longitem部分
+    #if re.search(IF_REGEX, label):
+    #    IFs = re.findall(IF_REGEX, label)
+    #    for IF in IFs:
+    #        suffixes = if_parse(IF)
+    #        if len(suffixes) > 0:
+    #            suffix = suffixes.values()[0] #这也只能选一个
+    #        else:
+    #            suffix = ''
+    #        label = label.replace(IF, suffix)
 
-    if re.search(LINK_REGEX, label):
-        pass
-    else:
-        label = label.split('|')[-1]
-    label = label.replace('<br/>', ' ')
-    label = label.replace('&nbsp;', ' ')
-    if re.search(NOWRAP_REGEX, label):
-        label = re.findall(NOWRAP_REGEX, label)[0]
+    #if re.search(LINK_REGEX, label):
+    #    pass
+    #else:
+    #    label = label.split('|')[-1]
+
+    wikicode = mwparserfromhell.parse(label)
+    templates = wikicode.filter_templates()
+    if templates:
+        label = unicode(templates[0])
+        print label
+        if templates[0].has(1):
+            t = templates[0].get(1)
+            if t.value.filter_templates():
+                tt = t.value.filter_templates()[0]
+                if tt.has(1):
+                    label = label.replace(unicode(tt), unicode(tt.get(1)))
+                    print label
+
+    print label
+    label = clear_label(label)
     if re.search(SPAN_REGEX, label):
         label = re.findall(SPAN_REGEX, label)[0]
     if re.search(COMMENT_REGEX, label):
         comment= re.findall(COMMENT_REGEX, label)[0]
         label = label.replace(comment, '')
+    print label
     return label
 
 #print render_label_parse('<span style="white-space:nowrap;">Notable credit(s)</span>')
@@ -187,9 +201,11 @@ def template_label_parse(label):
 def clear_label(label):
     label = label.replace('</noinclude>', '').replace('<noinclude>', '')
     label = label.replace('<includeonly>', '').replace('</includeonly>','')
-    nowrap = re.search(r'{{nowrap|.+?}}', label)
+    label = label.replace('<br/>', ' ')
+    label = label.replace('&nbsp;', ' ')
+    nowrap = re.search(NOWRAP_REGEX, label)
     if nowrap:
-        label = label.replace(re.findall(r'{{nowrap|.+?}}', label)[0], re.findall(r'{{nowrap|(.+?)}}', label)[0])
+        label = label.replace(re.findall(NOWRAP_REGEX, label)[0], re.findall(NOWRAP_IN_REGEX, label)[0])
     return label
 
 #print template_label_parse("{{#if:{{{production companies|{{{studio|}}}}}} |<div style'vertical-align:middle;'>{{{production companies|{{{studio|}}}}}}</div>}}")
@@ -317,7 +333,7 @@ def parse_table(template, doc):
         #print line
         if line.startswith('{{#if:') and re.search(THREE_QUOTATION, line):
             #  #if:{{{designer|}}}|<tr><td style="text-align:right;">'''設計者'''</td><td>{{{designer}}}</td></tr>
-            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
                 print "not:", line
                 continue
@@ -327,7 +343,7 @@ def parse_table(template, doc):
             result[template+'\t'+tl] = rl
             print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<th' in line:
-            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
                 print "not:", line
                 continue
@@ -337,7 +353,7 @@ def parse_table(template, doc):
             result[template+'\t'+tl] = rl
             print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<td' in line:
-            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
                 print "not:", line
                 continue
@@ -355,13 +371,12 @@ def parse_table(template, doc):
                     result[template+'\t'+tl] = rl
                     print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '! ' in line:
-            tls = re.findall(THREE_CONTAIN_REGEX, line)
+            tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
                 print "not:", line
                 continue
             tl = tls[0]
             tl = clear_label(tl).split('|')[0]
-            print line
             rls = re.findall(r'!\s(.+?){{!}}', line)
             if rls:
                 rl = rls[0].strip()
@@ -375,7 +390,7 @@ def parse_table(template, doc):
         while i < len(lines):
             line = lines[i].strip()
             if re.search(THREE_QUOTATION, line) and re.search(THREE_REGEX, line):
-                TL = re.findall(THREE_CONTAIN_REGEX, line)[0]
+                TL = re.findall(THREE_IN_REGEX, line)[0]
                 TL = clear_label(TL).strip('|')
                 RL = re.findall(THREE_QUOTATION, line)[0]
                 result[template+'\t'+TL] = RL
@@ -398,7 +413,16 @@ def parse_doc(template, doc):
         line = lines[i].strip()
         if line.startswith('|'):
             line = line.strip().strip('|').strip()
-            print line
+            if line.startswith('label') and re.search(r'label\d+',line) and re.search(r'data\d+',line):
+                print line
+                rl, tl = line.split('|', 1)
+                rl = rl.split('=', 1)[1].strip()
+                tl = tl.split('=', 1)[1].strip()
+                tl = tl.replace('{{{','').replace('}}}', '').strip('|')
+                result[template+'\t'+tl] = rl
+                i+=1
+                continue
+
             if (line.startswith('label') or line.startswith('header')) and '=' in line:
                 label, rl = line.split('=', 1)
                 if not re.search(r'\d+', label):
@@ -473,16 +497,16 @@ def read_template_dump(fn):
             s = ""
         line = fr.readline()
 
-def dump_parse(fn, fo, redirect_fn):
+def dump_parse(fn, output):
     Tn = not_infobox_Tn = not_have_p_Tn = 0
     extensions = set()
     tables = set()
     infoboxes = set()
     redirect = dict()
-    fw = codecs.open(fo, 'w', 'utf-8')
-    fw2 = codecs.open('no_property_infobox_template', 'w', 'utf-8')
-    fw_infobox = codecs.open('no_property_infobox_template_infobox', 'w', 'utf-8')
-    fw_table = codecs.open('no_property_infobox_template_table', 'w', 'utf-8')
+    fw = codecs.open(os.path.join(output, WIKI+'-'+VERSION+'-'+'template-triple.dat'), 'w', 'utf-8')
+    fw2 = codecs.open(WIKI+'-no_property_infobox_template', 'w', 'utf-8')
+    fw_infobox = codecs.open(WIKI+'-no_property_infobox_template_infobox', 'w', 'utf-8')
+    fw_table = codecs.open(WIKI+'-no_property_infobox_template_table', 'w', 'utf-8')
     for title, doc in read_template_dump(fn):
         Tn += 1
         ttype, result = parse_by_dump(doc)
@@ -505,7 +529,7 @@ def dump_parse(fn, fo, redirect_fn):
             not_have_p_Tn += 1
         else:
             for k, v in sorted(result.iteritems()):
-                #k = convert_to_simplified(k)
+                k = convert_to_simplified(k)
                 v = convert_to_simplified(v)
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
@@ -533,16 +557,22 @@ def dump_parse(fn, fo, redirect_fn):
     fw_infobox.close()
     fw_table.close()
 
-    re_fw = codecs.open(redirect_fn, 'w', 'utf-8') 
+    fw_re = codecs.open(os.path.join(output, WIKI+'-'+'template-redirect.dat'), 'w', 'utf-8') 
     for k, v in redirect.iteritems():
         if v in extensions or v in tables or v in infoboxes:
             #只记录infobox template的redirect信息
             try:
-                re_fw.write(convert_to_simplified(k)+'\t'+convert_to_simplified(v)+'\n')
+                fw_re.write(convert_to_simplified(k)+'\t'+convert_to_simplified(v)+'\n')
             except:
                 print k,v
                 pass
-    re_fw.close()
+    fw_re.close()
+
+    fw_inherit = codecs.open(os.path.join(output, WIKI+'-template-inherit.dat'), 'w', 'utf-8')
+    for k in extensions:
+        fw_inherit.write(k+'\n')
+    fw_inherit.close()
+    
 
 #parse('Template:infobox film')
 #parse('Template:infobox person')
@@ -569,16 +599,18 @@ def dump_parse(fn, fo, redirect_fn):
 if __name__ == "__main__":
     """
     1. template dump
-    2. template-triple
-    3. template-redirect
+    2. output dir
     """
     import sys
     import time
     start = time.time()
     if len(sys.argv) < 2:
-        print "not input and output filename"
+        print "no input file and output dir"
         exit()
 
-    dump_parse(sys.argv[1], sys.argv[2], sys.argv[3])
+    global WIKI, VERSION
+    WIKI, VERSION = sys.argv[1].split('/')[-1].split('-')[:2]
+
+    dump_parse(sys.argv[1], sys.argv[2])
     print 'Time Consuming:',time.time()-start
 
