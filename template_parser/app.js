@@ -19,13 +19,14 @@ var page = 'Template:infobox film';
 //var page = 'template:infobox OS';
 //var page = 'template:电视节目信息框';
 //var page = 'Template:Infobox government cabinet';
-var language = 'zh';
+var language = 'en';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
-//var fname = '../data/template.zhwiki';
-var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
+var fname = '../data/template.enwiki.infobox.left';
+//var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
 //console.log('fname:'+fname);
-//var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
-var fo = '../data/zhwiki-template-triple.dat'
+//var fo = '/User/Miyayx/server36/infobox/enwiki-template-triple.dat'
+//var fo = '../data/enwiki-template-triple.dat'
+var fo = "";
 
 String.prototype.replaceAll = function(s1,s2){
 　　return this.replace(new RegExp(s1,"gm"),s2);
