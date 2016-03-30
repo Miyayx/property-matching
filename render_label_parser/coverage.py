@@ -87,13 +87,18 @@ if __name__=="__main__":
 
     DIR = "/data/xlore20160223"
     global WIKI
-    WIKI = "enwiki"
-    tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
-    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
-    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
-    #tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
-    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
-    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
+    WIKI = "zhwiki"
+
+    #tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
+    #tem_triple.update(read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-inherit-template-triple.dat")))
+    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
+    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
+
+    tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
+    tem_triple.update(read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-inherit-template-triple.dat")))
+    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
+    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
+
     a_tem = template_replace(a_tem, tem_redirect, a_tem.values())
     template_coverage(tem_triple, a_tem, tem_redirect)
     infobox_coverage(tem_triple, a_tem, a_infobox)

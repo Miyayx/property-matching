@@ -507,6 +507,8 @@ def dump_parse(fn, output):
     fw2 = codecs.open(WIKI+'-no_property_infobox_template', 'w', 'utf-8')
     fw_infobox = codecs.open(WIKI+'-no_property_infobox_template_infobox', 'w', 'utf-8')
     fw_table = codecs.open(WIKI+'-no_property_infobox_template_table', 'w', 'utf-8')
+    fw_inherit = codecs.open(os.path.join(output, WIKI+'-template-inherit.dat'), 'w', 'utf-8')
+    fw_inherit_dump = codecs.open(os.path.join(output, WIKI+'-template-inherit-dump.dat'), 'w', 'utf-8')
     for title, doc in read_template_dump(fn):
         Tn += 1
         ttype, result = parse_by_dump(doc)
@@ -536,6 +538,10 @@ def dump_parse(fn, output):
 
         if ttype == TemplateType.EXTENSION:
             extensions.add(title)
+            fw_inherit.write(title+'\n')
+            fw_inherit_dump.write(doc)
+            fw_inherit.flush()
+            fw_inherit_dump.flush()
             #extension += 1
         elif ttype == TemplateType.TABLE:
             tables.add(title)
@@ -556,6 +562,7 @@ def dump_parse(fn, output):
     fw2.close()
     fw_infobox.close()
     fw_table.close()
+    fw_inherit.close()
 
     fw_re = codecs.open(os.path.join(output, WIKI+'-'+'template-redirect.dat'), 'w', 'utf-8') 
     for k, v in redirect.iteritems():
@@ -568,11 +575,6 @@ def dump_parse(fn, output):
                 pass
     fw_re.close()
 
-    fw_inherit = codecs.open(os.path.join(output, WIKI+'-template-inherit.dat'), 'w', 'utf-8')
-    for k in extensions:
-        fw_inherit.write(k+'\n')
-    fw_inherit.close()
-    
 
 #parse('Template:infobox film')
 #parse('Template:infobox person')

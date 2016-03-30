@@ -2,7 +2,7 @@
 import codecs
 
 def read_inherit_template(fn):
-    tems = [line.strip('\n') for line in codecs.open(fn)]
+    return set([line.strip('\n') for line in codecs.open(fn, 'r', 'utf-8')])
 
 def read_template_triple(fn):
     print "Reading %s ..."%fn

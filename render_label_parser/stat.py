@@ -46,8 +46,8 @@ def previous_compare(previous_fn, curr_fn, redirect_fn):
 
 if __name__=="__main__":
     #notuse_template("/data/xlore20160223/wikiExtractResult/zhwiki-template-name.dat", "/data/xlore20160223/Template/zhwiki-infobox-template.dat", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat" )
-    previous_compare("/data/xlore20160223/Template/old/zhwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat", "/data/xlore20160223/Template/zhwiki-template-redirect.dat")
+    #previous_compare("/data/xlore20160223/Template/old/zhwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/zhwiki-20160203-template-triple.dat", "/data/xlore20160223/Template/zhwiki-template-redirect.dat")
     #notuse_template("/data/xlore20160223/wikiExtractResult/enwiki-template-name.dat", "/data/xlore20160223/Template/enwiki-infobox-template.dat", "/data/xlore20160223/Template/enwiki-20160305-template-triple.dat" )
-    #previous_compare("/data/xlore20160223/Template/old/enwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/enwiki-20160305-template-triple.dat", "/data/xlore20160223/Template/enwiki-template-redirect.dat")
+    previous_compare("/data/xlore20160223/Template/old/enwiki-template-triple.dat.uniq", "/data/xlore20160223/Template/enwiki-20160305-template-triple.dat", "/data/xlore20160223/Template/enwiki-template-redirect.dat")
 
     
