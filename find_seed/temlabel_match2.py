@@ -1,9 +1,18 @@
 # -*- coding:utf-8 -*-
 import os
+import codecs
+
+import sys
+sys.path.append('..')
+from utils.logger import *
+from render_label_parser.fileio import *
+initialize_logger('./temlabel_match2.log')
 
 """
+需要跨语言链接：
+    template.cl文件从template_cl.py获得
 Find matched properties in Wikipedia
-与match_temlabel.py不一样的事：以template-attribute标识一个attribute
+与match_temlabel.py不一样的是：以template-attribute标识一个attribute
 首先，根据attribute的共现程度，找出相似的template，合并成一个(记录数据)
 1. 同一个template下template label相同的
 2. cross-template下template label相同的
@@ -12,57 +21,37 @@ Find matched properties in Wikipedia
 """
 
 #DIR = "/home/keg/data/infobox"
-DIR = "/home/xlore/server36/infobox"
-ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-enwiki-template-triple.dat.uniq")
-ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-zhwiki-template-triple.dat.uniq")
+#DIR = "/home/xlore/server36/infobox"
+DIR = "/data/xlore20160223/Template"
+
+#ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-enwiki-template-triple.dat.uniq")
+#ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "new-zhwiki-template-triple.dat.uniq")
+ENWIKI_TEMPLATE_LABEL = os.path.join(DIR, "enwiki-20160305-template-triple.dat")
+ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "zhwiki-20160203-template-triple.dat")
+
 MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "matched-template-label-2-1.dat")
 MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "matched-template-label-2-2.dat")
 MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "matched-template-label-2-3.dat")
 MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "matched-template-label-2-4.dat")
 MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "matched-template-label-all-2.dat")
+
 MATCHED_TEMPLATE = os.path.join(DIR, "template.cl")
 MATCHED_INSTANCE = os.path.join(DIR, "enwiki.zh.en.title.cl")
-ENWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/enwiki-infobox-new.dat"
-ZHWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/zhwiki-infobox-new.dat"
+
+#ENWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/enwiki-infobox-new.dat"
+#ZHWIKI_INFOBOX = "/home/xlore/disk2/raw.wiki/zhwiki-infobox-new.dat"
+
+ENWIKI_INFOBOX = "/data/xlore20160223/wikiExtractResult/enwiki-infobox-tmp.dat"
+ZHWIKI_INFOBOX = "/data/xlore20160223/wikiExtractResult/zhwiki-infobox-tmp.dat"
+
 ENWIKI_MERGED_TEMPLATE = os.path.join(DIR, "enwiki-merged-template-label.dat")
 ZHWIKI_MERGED_TEMPLATE = os.path.join(DIR, "zhwiki-merged-template-label.dat")
-
-def read_properties(fn):
-    d = {}
-    for line in open(fn):
-        tem, tem_label, _, prop_label = line.strip('\n').split('\t')
-        if not tem in d:
-            d[tem] = {}
-        if tem_label in d[tem]:
-            continue
-        d[tem][tem_label] = prop_label
-    return d
-
-def read_infoboxes(fn, matched_ins):
-    d = {}
-    d2 = {}
-    for line in open(fn):
-        if not '\t\t' in line:
-            continue
-        title, info = line.strip('\n').split('\t\t')
-        info = info.split('\t')[0]
-        if not title in matched_ins: #没有crosslingual的instance就不要了
-            continue
-        tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
-        
-        d[title] = {}
-        d2[title] = tem
-        for kv in infobox.split('::::;'):
-            k, v = kv.split('::::=')
-            d[title][k] = v
-    return d, d2
 
 def find_matched_1():
     """
     1. 同一个template下template label相同的
     """
-    fw = open(MATCHED_TEMPLATE_LABEL1, 'w')
+    fw = codecs.open(MATCHED_TEMPLATE_LABEL1, 'w', 'utf-8')
     for tem, d in enwiki.iteritems():
         if tem in zhwiki:
             for tem_label, prop_label in enwiki[tem].iteritems():
@@ -79,7 +68,7 @@ def find_matched_2():
     2. cross-template下template label相同的
     """
 
-    fw = open(MATCHED_TEMPLATE_LABEL2, 'w')
+    fw = codecs.open(MATCHED_TEMPLATE_LABEL2, 'w', 'utf-8')
     for tem_en, tem_zh in matched_tem.iteritems(): 
         if tem_en in enwiki and tem_zh in zhwiki:
             #print "Matched Templates:", tem_en, tem_zh
@@ -97,7 +86,7 @@ def find_matched_3():
     """
     3. cross-instance下template label相同的
     """
-    fw = open(MATCHED_TEMPLATE_LABEL3, 'w')
+    fw = codecs.open(MATCHED_TEMPLATE_LABEL3, 'w', 'utf-8')
     for ins_en, ins_zh in matched_ins.iteritems():
         if ins_en in enwiki_infobox_tem and ins_zh in zhwiki_infobox_tem:
             tem_en = enwiki_infobox_tem[ins_en]
@@ -122,7 +111,7 @@ def find_matched_4():
     """
     4. cross-instance下value指向同一个article的
     """
-    fw = open(MATCHED_TEMPLATE_LABEL4, 'w')
+    fw = codecs.open(MATCHED_TEMPLATE_LABEL4, 'w', 'utf-8')
     for ins_en, ins_zh in matched_ins.iteritems():
         if ins_en in enwiki_infobox and ins_zh in zhwiki_infobox:
             tem_en = enwiki_infobox_tem[ins_en]
@@ -158,7 +147,7 @@ def merge():
     """
     cat file1 file2 file3 file4 > file-all
     """
-    fw = open(MATCHED_TEMPLATE_LABEL_ALL, 'w')
+    fw = codecs.open(MATCHED_TEMPLATE_LABEL_ALL, 'w', 'utf-8')
     for en, zh in all_matched.iteritems():
         fw.write(en+'\t'+zh+'\n')
     fw.close()
@@ -209,18 +198,18 @@ def merge_similar_tem(tem):
     return tem_label, label_tems
 
     
-matched_tem = dict((line.strip('\n').split('\t')) for line in open(MATCHED_TEMPLATE))
+matched_tem = dict((line.strip('\n').split('\t')) for line in codecs.open(MATCHED_TEMPLATE, 'r', 'utf-8'))
 print "ALL matched templates:",len(matched_tem)
-matched_ins = dict((line.strip('\n').split('\t')) for line in open(MATCHED_INSTANCE))
+matched_ins = dict((line.strip('\n').split('\t')) for line in codecs.open(MATCHED_INSTANCE, 'r', 'utf-8'))
 
-enwiki = read_properties(ENWIKI_TEMPLATE_LABEL)
-zhwiki = read_properties(ZHWIKI_TEMPLATE_LABEL)
+enwiki = read_template_triple(ENWIKI_TEMPLATE_LABEL)
+zhwiki = read_template_triple(ZHWIKI_TEMPLATE_LABEL)
 
 enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
 #for l, tems in sorted(enwiki_label_tems.items()):
 #    print l, tems
 print "Final Templates Set:", len(enwiki_label_tems)
-with open(ENWIKI_MERGED_TEMPLATE, 'w') as fw:
+with codecs.open(ENWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
     for tem, l in enwiki_tem_label.iteritems():
         fw.write("%s\t%s\n"%(tem, l))
 
@@ -228,7 +217,7 @@ zhwiki_tem_label, zhwiki_label_tems = merge_similar_tem(zhwiki)
 #for l, tems in sorted(zhwiki_label_tems.items()):
 #    print l, tems
 print "Final Templates Set:", len(zhwiki_label_tems)
-with open(ZHWIKI_MERGED_TEMPLATE, 'w') as fw:
+with codecs.open(ZHWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
     for tem, l in zhwiki_tem_label.iteritems():
         fw.write("%s\t%s\n"%(tem, l))
 
@@ -261,11 +250,16 @@ for t1, t2 in origin_matched_tem.items():
     if t1 in enwiki_tem_label and t2 in zhwiki_tem_label:
         matched_tem[enwiki_tem_label[t1]] = zhwiki_tem_label[t2]
 
-
 all_matched = {}
 
-enwiki_infobox, enwiki_infobox_tem = read_infoboxes(ENWIKI_INFOBOX, matched_ins)
-zhwiki_infobox, zhwiki_infobox_tem = read_infoboxes(ZHWIKI_INFOBOX, matched_ins)
+enwiki_infobox_tem, enwiki_infobox = read_wiki_infobox(ENWIKI_INFOBOX)
+zhwiki_infobox_tem, zhwiki_infobox = read_wiki_infobox(ZHWIKI_INFOBOX)
+
+enwiki_infobox_tem = {k: v for k, v in enwiki_infobox_tem.iteritems() if k in set(matched_ins.keys())}
+enwiki_infobox_tem = {k: v for k, v in enwiki_infobox_tem.iteritems() if k in set(matched_ins.keys())}
+
+zhwiki_infobox_tem = {k: v for k, v in zhwiki_infobox_tem.iteritems() if k in set(matched_ins.values())}
+zhwiki_infobox_tem = {k: v for k, v in zhwiki_infobox_tem.iteritems() if k in set(matched_ins.values())}
 
 find_matched_1()
 print "Matched templates with different label:",len(matched_tem)
