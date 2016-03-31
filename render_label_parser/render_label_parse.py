@@ -264,6 +264,12 @@ def template_type(doc):
     text = revision.find(".//text").text
 
     if text != None:
+        text = text.strip()
+
+        if re.search(r'^<!--.*?-->', text, flags=re.DOTALL):
+            #删除开头的<!-- -->
+            text = text.replace(re.findall(r'^<!--.*?-->', text, flags=re.DOTALL)[0],'')
+
         firstline = text.lower().split('\n')[0].strip('\n').strip().replace(' ','')
 
         secondline = None
