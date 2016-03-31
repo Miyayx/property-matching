@@ -8,17 +8,28 @@ from render_label_parse import *
 from hanziconv import HanziConv
 
 DIR = "/data/xlore20160223/Template"
-INHERIT_TEMPLATE  = os.path.join(DIR, "enwiki-template-inherit.dat")
-REDIRECT_TEMPLATE = os.path.join(DIR, "enwiki-template-redirect.dat")
-TEMPLATE_TRIPLE   = os.path.join(DIR, "enwiki-20160305-template-triple.dat")
-INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "enwiki-20160305-inherit-template-triple.dat")
-INHERIT_TEMPLATE_DUMP = os.path.join("/data/dump/","enwiki/enwiki-20160306-template-inherit-dump.dat")
+
+#INHERIT_TEMPLATE  = os.path.join(DIR, "enwiki-template-inherit.dat")
+#REDIRECT_TEMPLATE = os.path.join(DIR, "enwiki-template-redirect.dat")
+#TEMPLATE_TRIPLE   = os.path.join(DIR, "enwiki-20160305-template-triple.dat")
+#INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "enwiki-20160305-inherit-template-triple.dat")
+#INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"enwiki-template-inherit-dump.dat")
 
 INHERIT_TEMPLATE  = os.path.join(DIR, "zhwiki-template-inherit.dat")
 REDIRECT_TEMPLATE = os.path.join(DIR, "zhwiki-template-redirect.dat")
 TEMPLATE_TRIPLE   = os.path.join(DIR, "zhwiki-20160203-template-triple.dat")
 INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "zhwiki-20160203-inherit-template-triple.dat")
 INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"zhwiki-template-inherit-dump.dat")
+
+
+def inherit_render_label_parse(label):
+    THREE = r'{{{(.+)}}}'
+    labels = []
+    while re.search(THREE, label):
+        label = re.findall(THREE, label)[0]
+        l = re.split(THREE, label)[0].strip().strip('|').strip()
+        labels.append(l)
+    return labels
 
 def parse_inherit_doc(doc, tl_rl):
     result = {}
@@ -29,19 +40,25 @@ def parse_inherit_doc(doc, tl_rl):
     lines = doc.split('\n')
     i = 0 
     rl = tl = None
-    n = "0"
     while i < len(lines):
         line = lines[i].strip()
         if line.startswith('|') and '=' in line:
             tl, rl = line.strip('|').strip().split('=',1)
             tl = tl.strip()
             rl = rl.strip()
-            print tl, rl
+            #print tl, rl
             #print tl_rl
             if re.search(THREE_REGEX, rl):
-                rl = render_label_parse(rl)
-                if rl in tl_rl:
-                    result[tl] = tl[rl]
+                rls = inherit_render_label_parse(rl)
+                for r in rls:
+                    print 'Render label:', r
+                for RL in (rls + [render_label_parse(rl)]):
+                    if RL in tl_rl:
+                        result[tl] = tl_rl[RL]
+                        break
+                if not tl in result and rls:
+                    result[tl] = rls[-1]
+
             elif len(rl) > 0:
                 #| timezone1               = [[歐洲中部時間|CET]]
                 result[tl] = rl
@@ -69,11 +86,11 @@ def parse_inherit(doc, lower_redirect_tems, redirect_tems, tem_triple):
         if len(text.split('\n')) > 1:
             secondline = text.lower().split('\n')[1].strip('\n').strip()
         parent_tem = None
-        if re.search(r'{{\s*infobox.+', firstline.lower()):
-            print 'firstline', firstline
+        if re.search(r'{{\s*infobox.+', firstline) or re.search(ur'{{\s*艺人', firstline):
+            #print 'firstline', firstline
             parent_tem = re.findall(r'{{(.+?)$', firstline)[0]
         elif secondline and re.search(r'{{\s*infobox.+', secondline.lower()):
-            print 'secondline', secondline
+            #print 'secondline', secondline
             parent_tem = re.findall(r'{{(.+?)$', secondline)[0]
         parent_tem = parent_tem.replace('infobox', 'Infobox').replace('_',' ')
         parent_tem = 'Template:'+parent_tem
@@ -82,11 +99,11 @@ def parse_inherit(doc, lower_redirect_tems, redirect_tems, tem_triple):
         if parent_tem.lower() in lower_redirect_tems:
             parent_tem = lower_redirect_tems[parent_tem.lower()]
         if parent_tem in redirect_tems:
-            print parent_tem, "in redirect_tems"
+            #print parent_tem, "in redirect_tems"
             parent_tem = redirect_tems[parent_tem]
-        print parent_tem
+        #print parent_tem
         if parent_tem in tem_triple:
-            print parent_tem, "in tem_triple"
+            #print parent_tem, "in tem_triple"
             result = parse_inherit_doc(text, tem_triple[parent_tem])
             return result, parent_tem
 
@@ -142,7 +159,9 @@ def main():
     print "New Properties:", new_properties
     print "Left:",len(left_tems)
 
-    with codecs.open('zhwiki-left-inherit-template.dat', 'w', 'utf-8') as f:
+    WIKI = INHERIT_TEMPLATE.split('/')[-1].split('-')[0]
+
+    with codecs.open(WIKI+'-left-inherit-template.dat', 'w', 'utf-8') as f:
         for t in sorted(left_tems):
             f.write(t+'\n')
 

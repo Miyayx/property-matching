@@ -147,23 +147,21 @@ def render_label_parse(label):
     templates = wikicode.filter_templates()
     if templates:
         label = unicode(templates[0])
-        print label
         if templates[0].has(1):
             t = templates[0].get(1)
             if t.value.filter_templates():
                 tt = t.value.filter_templates()[0]
                 if tt.has(1):
                     label = label.replace(unicode(tt), unicode(tt.get(1)))
-                    print label
+                    #print label
 
-    print label
     label = clear_label(label)
     if re.search(SPAN_REGEX, label):
         label = re.findall(SPAN_REGEX, label)[0]
     if re.search(COMMENT_REGEX, label):
         comment= re.findall(COMMENT_REGEX, label)[0]
         label = label.replace(comment, '')
-    print label
+    #print label
     return label
 
 #print render_label_parse('<span style="white-space:nowrap;">Notable credit(s)</span>')
@@ -272,10 +270,10 @@ def template_type(doc):
         if len(text.split('\n')) > 1:
             secondline = text.lower().split('\n')[1].strip('\n').strip().replace(' ','')
 
-        if firstline.endswith('{{infobox') or firstline.endswith(u'{{艺人') or '{{infobox\n'in text or (secondline and secondline.endswith('{{infobox')):
+        if firstline.endswith('{{infobox') or '{{infobox\n'in text or (secondline and secondline.endswith('{{infobox')):
             #print text.lower().split('\n')[0]
             return TemplateType.INFOBOX
-        elif '{{infobox' in firstline or (secondline and '{{infobox' in secondline):
+        elif '{{infobox' in firstline or firstline.endswith(u'{{艺人') or (secondline and '{{infobox' in secondline):
             #print text.lower().split('\n')[0]
             return TemplateType.EXTENSION
         elif 'class="infobox' in firstline or (secondline and 'class="infobox' in secondline):
@@ -535,6 +533,9 @@ def dump_parse(fn, output):
                 v = convert_to_simplified(v)
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
+
+        if u'代表團' in title:
+            logging.info(title.encode('utf-8')+', '+str(ttype))
 
         if ttype == TemplateType.EXTENSION:
             extensions.add(title)
