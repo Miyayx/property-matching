@@ -276,7 +276,7 @@ def template_type(doc):
         elif '{{infobox' in firstline or firstline.endswith(u'{{艺人') or (secondline and '{{infobox' in secondline):
             #print text.lower().split('\n')[0]
             return TemplateType.EXTENSION
-        elif 'class="infobox' in firstline or (secondline and 'class="infobox' in secondline):
+        elif re.search(r'class=.+?infobox',firstline) or (secondline and re.search(r'class=.+infobox', secondline)):
             return TemplateType.TABLE
         #elif re.search(REDIRECT_REGEX, text.strip()):
         #    return TemplateType.REDIRECT
@@ -406,13 +406,13 @@ def parse_doc(template, doc):
     lines = doc.split('\n')
     i = 0 
     rl = tl = None
-    n = "0"
+    rln = tln = 0
     while i < len(lines):
         line = lines[i].strip()
         if line.startswith('|'):
             line = line.strip().strip('|').strip()
             if line.startswith('label') and re.search(r'label\d+',line) and re.search(r'data\d+',line):
-                print line
+                # label和data在同一行
                 rl, tl = line.split('|', 1)
                 rl = rl.split('=', 1)[1].strip()
                 tl = tl.split('=', 1)[1].strip()
@@ -421,6 +421,7 @@ def parse_doc(template, doc):
                 i+=1
                 continue
 
+            # 一般先出来label再出现data的情况比较多，但也有先出现data再出现label的时候
             if (line.startswith('label') or line.startswith('header')) and '=' in line:
                 label, rl = line.split('=', 1)
                 if not re.search(r'\d+', label):
@@ -428,17 +429,8 @@ def parse_doc(template, doc):
                     continue
                 label = label.strip('\t').strip()
                 rl = rl.strip('\t').strip()
-                n = re.findall(r'\d+', label)[0]
-
-            if line.startswith('data') and '=' in line:
-                label, tl = line.split('=', 1)
-                if not re.search(r'\d+', label): #没有data后没有数字，不解析
-                    i += 1
-                    continue
-                label = label.strip('\t').strip()
-                tl = tl.strip('\t').strip()
-                m = re.findall(r'\d+', label)[0]
-                if n == m:
+                rln = re.findall(r'\d+', label)[0]
+                if rln == tln:
                     #print '&'*10
                     #print tl
                     #print rl
@@ -447,9 +439,27 @@ def parse_doc(template, doc):
                     for TL in TLS:
                         #print template + '\t' + TL + '\t' + RL
                         result[template+'\t'+TL] = RL
-                else:
-                    n = "0"
-                    rl = tl = None
+
+            if line.startswith('data') and '=' in line:
+                label, tl = line.split('=', 1)
+                if not re.search(r'\d+', label): #没有data后没有数字，不解析
+                    i += 1
+                    continue
+                label = label.strip('\t').strip()
+                tl = tl.strip('\t').strip()
+                tln = re.findall(r'\d+', label)[0]
+                if rln == tln:
+                    #print '&'*10
+                    #print tl
+                    #print rl
+                    RL = render_label_parse(rl)
+                    TLS = template_label_parse(tl)
+                    for TL in TLS:
+                        #print template + '\t' + TL + '\t' + RL
+                        result[template+'\t'+TL] = RL
+                #else:
+                    #rln = tln = "0"
+                    #rl = tl = None
         i += 1
     return result
 
@@ -534,9 +544,6 @@ def dump_parse(fn, output):
                 fw.write(k+'\t'+v+'\n')
         fw.flush()
 
-        if u'代表團' in title:
-            logging.info(title.encode('utf-8')+', '+str(ttype))
-
         if ttype == TemplateType.EXTENSION:
             extensions.add(title)
             fw_inherit.write(title+'\n')
@@ -558,6 +565,7 @@ def dump_parse(fn, output):
     logging.info("Extension: %d"%len(extensions))
     logging.info("Table:%d"%len(tables))
     logging.info("Redirect:%d"%len(redirect))
+    logging.info("\n")
 
     fw.close()
     fw2.close()

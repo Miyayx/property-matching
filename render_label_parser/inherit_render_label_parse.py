@@ -28,6 +28,7 @@ def inherit_render_label_parse(label):
     while re.search(THREE, label):
         label = re.findall(THREE, label)[0]
         l = re.split(THREE, label)[0].strip().strip('|').strip()
+        l = clear_label(l)
         labels.append(l)
     return labels
 

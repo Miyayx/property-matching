@@ -79,9 +79,6 @@ def infobox_coverage(tem_triple, a_tem, a_infobox):
     logging.info("Hit: %d"%hit)
     logging.info("Infobox coverage: %f\n"%(hit*1.0/total))
 
-def infobox_replace(tem_triple, a_tem, a_infobox):
-    pass
-    
 
 if __name__=="__main__":
     import time
@@ -110,5 +107,6 @@ if __name__=="__main__":
     infobox_coverage(tem_triple, a_tem, a_infobox)
     article_coverage(tem_triple, a_tem, a_infobox)
 
-    print 'Time Consuming:',time.time()-start
+    logging.info('Time Consuming:%d'%(time.time()-start))
+    logging.info('*'*15)
     
