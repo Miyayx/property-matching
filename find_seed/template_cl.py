@@ -2,6 +2,10 @@
 import os
 from hanziconv import HanziConv
 
+"""
+抽取Template的cross－lingual对
+"""
+
 DIR = "/data/xlore20160223/Template"
 ZHWIKI_PAGE = "/data/dump/zhwiki/zhwiki-20160203-page.sql"
 ENWIKI_PAGE = "/data/dump/enwiki/enwiki-20160305-page.sql"
