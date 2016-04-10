@@ -1,5 +1,10 @@
 # -*- coding:utf-8 -*-
-import os
+import sys,os
+
+sys.path.append('..')
+from utils.logger import *
+import utils.label as label
+initialize_logger('./find_enwiki_baidu.log')
 
 """
 通过已有的wikipedia matched properties 从百度中找到对应的property
@@ -18,11 +23,6 @@ ENWIKI_MERGED_TEMPLATE_LABEL = os.path.join(DIR, "enwiki-merged-template-label.d
 ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE = os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
 ENWIKI_BAIDU_MATCHED_PROPERTY = os.path.join(DIR, "enwiki-baidu-matched-property-2.dat")
 
-def clean_label(label):
-    if '[[' in label:
-        label = label[2:-2]
-        label = label.split('|')[0]
-    return label
 
 def read_merged_template(fn):
     print "read_merged_template"
@@ -35,8 +35,8 @@ def read_wiki_matched_attributes(fn):
         en, zh = line.strip('\n').split('\t')
         tem, en = en.split('###')
         zh = zh.split('###')[-1]
-        en = clean_label(en)
-        zh = clean_label(zh)
+        en = label.clean_label(en)
+        zh = label.clean_label(zh)
         if not tem in tem_zh_en:
             tem_zh_en[tem] = {}
         tem_zh_en[tem][zh] = en
