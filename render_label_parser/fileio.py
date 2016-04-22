@@ -29,18 +29,19 @@ def read_wiki_infobox(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'Template:'+tem
+        if not tem.startswith('Template:'):
+            tem = 'Template:'+tem
 
         a_tem[title] = tem
         
         for pair in infobox.split('::::;'):
             try:
                 p, v = pair.split('::::=')
-            except:
-                print title, tem, pair
+            except Exception,e:
+                print 'Error:', e, title, tem, pair
+                print pair
                 continue
             if not title in a_infobox:
                 a_infobox[title] = {}
-            else:
-                a_infobox[title][p] = v
+            a_infobox[title][p] = v
     return a_tem, a_infobox

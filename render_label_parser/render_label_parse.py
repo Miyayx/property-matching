@@ -24,7 +24,6 @@ import mwparserfromhell
 
 """
 通过给的template list， 从网页中爬取， 或从dump文件中抽取显示label
-
 """
 import sys
 sys.path.append('..')
@@ -47,18 +46,34 @@ OUTPUT = "zhwiki-template-triple-new.dat"
 IF_REGEX = r"{{#if:.+}}"
 THREE_REGEX = r"{{{.+?}}}"
 THREE_IN_REGEX = r"{{{(.+?)}}}"
-THREE_QUOTATION = r"'''(.+?)'''"
-LONGITEM_REGEX = r"{{longitem.+}}"
-NOWRAP_IN_REGEX = r'{{nowrap\|(.+)}}'
-NOWRAP_REGEX = r'{{nowrap\|.+}}'
-SPAN_REGEX = r'\<span.+?\>(.+)\</span\>'
-COMMENT_REGEX = r'\<!--.+-\>'
+THREE_QUOTATION = r"'''.+?'''"
+THREE_IN_QUOTATION = r"'''(.+?)'''"
+LONGITEM_REGEX = r"{{longitem.+?}}"
+LONGITEM_IN_REGEX = r"{{longitem(.+?)}}"
+NOWRAP_IN_REGEX = r'{{[nN]owrap\|(.+?)}}'
+NOWRAP_REGEX = r'{{[nN]owrap\|.+?}}'
+SPAN_IN_REGEX = r'\<span.+?\>(.+?)\</span\>'
+SPAN_REGEX = r'\<span.+?\>.+?\</span\>'
+COMMENT_REGEX = r'\<!--.+?--\>'
 LINK_REGEX = r'\[\[.+\]\]'
 REDIRECT_REGEX = ur'#(?:REDIRECT|重定向).*\[\[(.+?)\]\]'
 #TH_REGEX = r'\<th.*?\>(.+?)\</th\>'
 TH_REGEX = r'\<th.*?\>(.+?)\</'
 TD_REGEX = r'\<td.*?\>(.+?)\</td\>'
 TD_THREE_REGEX = r'\<td.*?\>{{{(.+?)}}}\</td\>'
+
+CN_REGEX = r'-{.+?}-'
+CN_IN_REGEX = r'-{(.+?)}-'
+
+def extract_cn(label):
+    if re.search(CN_REGEX, label):
+        label = re.findall(CN_IN_REGEX, label)[0]
+    if 'zh-cn:' in label:
+        print label
+        label = re.findall(r'zh-cn:(.+?);?', label)[0]
+    elif 'zh-hans:' in label:
+        label = re.findall(r'zh-hans:(.+?);?', label)[0]
+    return label
 
 def convert_to_simplified(text):
     if u'歷' in text:
@@ -149,18 +164,19 @@ def render_label_parse(label):
         label = unicode(templates[0])
         if templates[0].has(1):
             t = templates[0].get(1)
+            if '{{' in t and templates[0].has(2):
+                t = templates[0].get(2)
+            label = t
             if t.value.filter_templates():
                 tt = t.value.filter_templates()[0]
                 if tt.has(1):
                     label = label.replace(unicode(tt), unicode(tt.get(1)))
-                    #print label
 
+        label = unicode(label)
     label = clear_label(label)
-    if re.search(SPAN_REGEX, label):
-        label = re.findall(SPAN_REGEX, label)[0]
-    if re.search(COMMENT_REGEX, label):
-        comment= re.findall(COMMENT_REGEX, label)[0]
-        label = label.replace(comment, '')
+    if re.search(LONGITEM_REGEX, label): #{{longitem|地点}}
+        longitem = re.findall(LONGITEM_REGEX, label)[0]
+        label = label.replace(longitem, re.findall(LONGITEM_IN_REGEX, label)[0]).strip().strip('|').strip()
     #print label
     return label
 
@@ -199,11 +215,20 @@ def template_label_parse(label):
 def clear_label(label):
     label = label.replace('</noinclude>', '').replace('<noinclude>', '')
     label = label.replace('<includeonly>', '').replace('</includeonly>','')
-    label = label.replace('<br/>', ' ')
+    label = label.replace('</small>', '').replace('<small>','')
+    label = label.replace('<br/>', ' ').replace('<br />', ' ').replace('<br>', ' ')
     label = label.replace('&nbsp;', ' ')
     nowrap = re.search(NOWRAP_REGEX, label)
     if nowrap:
         label = label.replace(re.findall(NOWRAP_REGEX, label)[0], re.findall(NOWRAP_IN_REGEX, label)[0])
+    if re.search(THREE_QUOTATION, label):
+        label = label.replace(re.findall(THREE_QUOTATION, label)[0], re.findall(THREE_IN_QUOTATION, label)[0])
+    if re.search(COMMENT_REGEX, label): #<!-- -->
+        for comment in re.findall(COMMENT_REGEX, label):
+            label = label.replace(comment, '')
+    if re.search(SPAN_REGEX, label):  
+        label = label.replace(re.findall(SPAN_REGEX, label)[0], re.findall(SPAN_IN_REGEX, label)[0])
+    label = extract_cn(label)
     return label
 
 #print template_label_parse("{{#if:{{{production companies|{{{studio|}}}}}} |<div style'vertical-align:middle;'>{{{production companies|{{{studio|}}}}}}</div>}}")
@@ -339,53 +364,57 @@ def parse_table(template, doc):
             #  #if:{{{designer|}}}|<tr><td style="text-align:right;">'''設計者'''</td><td>{{{designer}}}</td></tr>
             tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
-                print "not:", line
+                #print "not:", line
                 continue
             tl = tls[0]
             tl = clear_label(tl).strip('|')
-            rl = re.findall(THREE_QUOTATION, line)[0]
+            rl = re.findall(THREE_IN_QUOTATION, line)[0]
+            rl = clear_label(rl).strip()
             result[template+'\t'+tl] = rl
-            print tl, rl
+            #print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<th' in line:
             tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
-                print "not:", line
+                #print "not:", line
                 continue
             tl = tls[0]
             tl = clear_label(tl).strip('|')
             rl = re.findall(TH_REGEX, line)[0].strip().strip(u'：').strip(u':')
+            rl = clear_label(rl).strip()
             result[template+'\t'+tl] = rl
-            print tl, rl
+            #print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '<td' in line:
             tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
-                print "not:", line
+                #print "not:", line
                 continue
             tl = tls[0]
             tl = clear_label(tl).strip('|')
             rls = re.findall(TD_THREE_REGEX, line)
+            if not rls:
+                rls = re.findall(TD_REGEX, line)
             if rls:
                 rl = rls[0]
+                rl = clear_label(rl).strip()
                 result[template+'\t'+tl] = rl
-                print tl, rl
-            else:
-                rls = re.findall(TD_REGEX, line)
-                if rls:
-                    rl = rls[0]
-                    result[template+'\t'+tl] = rl
-                    print tl, rl
+                #print tl, rl
         elif (line.startswith('{{#if:') or line.startswith('{{#ifeq:')) and '! ' in line:
+            print line
             tls = re.findall(THREE_IN_REGEX, line)
             if not tls:
-                print "not:", line
+                #print "not:", line
                 continue
             tl = tls[0]
             tl = clear_label(tl).split('|')[0]
-            rls = re.findall(r'!\s(.+?){{!}}', line)
-            if rls:
-                rl = rls[0].strip()
+            line = clear_label(line)
+            if re.search(r'!\s(.+?)$', line):
+                rls = re.findall(r'!\s(.+?)$', line)[0].split('{{!}}')
+                if 'style' in rls[0] and len(rls) > 1:
+                    rl = rls[1].strip()
+                else:
+                    rl = rls[0].strip()
                 result[template+'\t'+tl] = rl
-                print tl, rl
+                #print tl, rl
 
     if len(result) == 0:
         lines = doc.split('\n')
@@ -397,8 +426,9 @@ def parse_table(template, doc):
                 TL = re.findall(THREE_IN_REGEX, line)[0]
                 TL = clear_label(TL).strip('|')
                 RL = re.findall(THREE_QUOTATION, line)[0]
+                RL = clear_label(RL).strip()
                 result[template+'\t'+TL] = RL
-                print TL, RL
+                #print TL, RL
             i += 1
 
     return result
@@ -423,6 +453,7 @@ def parse_doc(template, doc):
                 rl = rl.split('=', 1)[1].strip()
                 tl = tl.split('=', 1)[1].strip()
                 tl = tl.replace('{{{','').replace('}}}', '').strip('|')
+                rl = clear_label(rl)
                 result[template+'\t'+tl] = rl
                 i+=1
                 continue
@@ -444,6 +475,7 @@ def parse_doc(template, doc):
                     TLS = template_label_parse(tl)
                     for TL in TLS:
                         #print template + '\t' + TL + '\t' + RL
+                        RL = clear_label(RL)
                         result[template+'\t'+TL] = RL
 
             if line.startswith('data') and '=' in line:
@@ -462,6 +494,7 @@ def parse_doc(template, doc):
                     TLS = template_label_parse(tl)
                     for TL in TLS:
                         #print template + '\t' + TL + '\t' + RL
+                        RL = clear_label(RL)
                         result[template+'\t'+TL] = RL
                 #else:
                     #rln = tln = "0"
@@ -480,7 +513,7 @@ def read_templates(fn, fo):
 
         for line in codecs.open(fo, 'r' 'utf-8'):
             have.add(line.strip('\n').split('\t')[0])
-        print 'Have parsed',len(have),'templates'
+        #print 'Have parsed',len(have),'templates'
 
     for line in codecs.open(fn, 'r' 'utf-8'):
         t = None

@@ -9,17 +9,17 @@ from hanziconv import HanziConv
 
 DIR = "/data/xlore20160223/Template"
 
-#INHERIT_TEMPLATE  = os.path.join(DIR, "enwiki-template-inherit.dat")
-#REDIRECT_TEMPLATE = os.path.join(DIR, "enwiki-template-redirect.dat")
-#TEMPLATE_TRIPLE   = os.path.join(DIR, "enwiki-20160305-template-triple.dat")
-#INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "enwiki-20160305-inherit-template-triple.dat")
-#INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"enwiki-template-inherit-dump.dat")
+INHERIT_TEMPLATE  = os.path.join(DIR, "enwiki-template-inherit.dat")
+REDIRECT_TEMPLATE = os.path.join(DIR, "enwiki-template-redirect.dat")
+TEMPLATE_TRIPLE   = os.path.join(DIR, "enwiki-20160305-template-triple.dat")
+INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "enwiki-20160305-inherit-template-triple.dat")
+INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"enwiki-template-inherit-dump.dat")
 
-INHERIT_TEMPLATE  = os.path.join(DIR, "zhwiki-template-inherit.dat")
-REDIRECT_TEMPLATE = os.path.join(DIR, "zhwiki-template-redirect.dat")
-TEMPLATE_TRIPLE   = os.path.join(DIR, "zhwiki-20160203-template-triple.dat")
-INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "zhwiki-20160203-inherit-template-triple.dat")
-INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"zhwiki-template-inherit-dump.dat")
+#INHERIT_TEMPLATE  = os.path.join(DIR, "zhwiki-template-inherit.dat")
+#REDIRECT_TEMPLATE = os.path.join(DIR, "zhwiki-template-redirect.dat")
+#TEMPLATE_TRIPLE   = os.path.join(DIR, "zhwiki-20160203-template-triple.dat")
+#INHERIT_TEMPLATE_TRIPLE = os.path.join(DIR, "zhwiki-20160203-inherit-template-triple.dat")
+#INHERIT_TEMPLATE_DUMP = os.path.join(DIR,"zhwiki-template-inherit-dump.dat")
 
 
 def inherit_render_label_parse(label):
@@ -88,11 +88,14 @@ def parse_inherit(doc, lower_redirect_tems, redirect_tems, tem_triple):
             secondline = text.lower().split('\n')[1].strip('\n').strip()
         parent_tem = None
         if re.search(r'{{\s*infobox.+', firstline) or re.search(ur'{{\s*艺人', firstline):
-            #print 'firstline', firstline
             parent_tem = re.findall(r'{{(.+?)$', firstline)[0]
-        elif secondline and re.search(r'{{\s*infobox.+', secondline.lower()):
-            #print 'secondline', secondline
+        if secondline and re.search(r'{{\s*infobox.+', secondline.lower()):
             parent_tem = re.findall(r'{{(.+?)$', secondline)[0]
+
+        if parent_tem == None:
+            return {}, None
+            
+
         parent_tem = parent_tem.replace('infobox', 'Infobox').replace('_',' ')
         parent_tem = 'Template:'+parent_tem
         parent_tem = HanziConv.toSimplified(parent_tem)
