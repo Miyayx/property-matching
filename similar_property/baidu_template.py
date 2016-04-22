@@ -308,10 +308,85 @@ def find_attribute_in_baidu3():
     f.close()
     print "Templates which have attrs Count:",count
 
+def find_attribute_in_baidu4():
+    """
+    1. 找到使用template的wiki instance
+    2. 通过跨语言链接，找到Ie的对应Iz, Iz中的instance的property计数1(如果这个property在step4中又出现，则频数累加)
+    3. 找到instance的Ce前10（以concept包含的instance数量排序）,且concept一定包含两个以上的instance
+    4. 通过跨语言概念链接，找到baidu中对应的概念Cz, Cz下的instance(instance至少有两个概念在Cz中)的property计数1
+    """
+    tem_baiduattr_count = {}
+    zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
+
+    # Step 1
+    tem_enins = read_wiki_template_instance(ENWIKI_INFOBOX)
+
+    # Step 2
+    tem_zhins = replace_by_crosslingual(tem_enins, WIKI_CROSSLINGUAL)
+    for tem, inses in tem_zhins.iteritems():
+        a_c = {}
+        for ins in inses:
+            if ins in zh_ins_attr:
+                for a in zh_ins_attr[ins]:
+                    a_c[a] = a_c.get(a, 0)+1
+        tem_baiduattr_count[tem] = a_c
+
+    # Step 3 
+    # get Ce
+    from collections import Counter
+    inses = []
+    for tem, ins in tem_enins.iteritems():
+        inses += ins
+    ins_cons = read_wiki_instance_concept(ENWIKI_INSTANCE_CONCEPT, set(inses))
+    del inses
+    tem_con = {}
+    for tem, inses in tem_enins.iteritems():
+        cons = []
+        for ins in inses:
+            if ins in ins_cons:
+                cons += ins_cons[ins]
+        con_count = Counter(cons)
+        tem_con[tem] = set([k for k, v in con_count.most_common() if v > 3][:10])
+    del ins_cons
+
+    # Step 4
+    tem_zhcon = replace_by_crosslingual(tem_con, WIKI_CROSSLINGUAL)
+    del tem_con
+    zh_con_ins = read_baidu_concept_instance(BAIDU_INSTANCE_CONCEPT)
+    tem_zhconins = {}
+    for tem, cons in tem_zhcon.iteritems():
+        s = []
+        for con in cons:
+            if con in zh_con_ins:
+                s += zh_con_ins[con]
+        tem_zhconins[tem] = set(s)
+    del zh_con_ins
+    for tem, inses in tem_zhconins.iteritems():
+        a_c = tem_baiduattr_count[tem]
+        for ins in inses:
+            if ins in zh_ins_attr:
+                for a in zh_ins_attr[ins]:
+                    a_c[a] = a_c.get(a, 0)+1
+        tem_baiduattr_count[tem] = a_c
+
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    tfidf_filter2(tem_baiduattr_count)
+
+    count = 0
+    f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4", 'w', 'utf-8')
+    print "Templates:",len(tem_baiduattr_count)
+    for tem, attrs in sorted(tem_baiduattr_count.items()):
+        if len(attrs) > 0:
+            print tem, len(attrs)
+            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+            f.flush()
+            count += 1
+    f.close()
+    print "Templates which have attrs Count:",count
 
 if __name__ == "__main__":
     import time
     start = time.time()
-    find_attribute_in_baidu3()
+    find_attribute_in_baidu4()
     print "Time Consuming:", time.time()-start
 
