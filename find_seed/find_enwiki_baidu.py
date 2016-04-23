@@ -3,6 +3,7 @@ import os,codecs
 
 DIR = "/data/xlore20160223/Template"
 ENWIKI_ZHWIKI = os.path.join(DIR, "matched-template-label-all-2.dat")
+#ENWIKI_ZHWIKI = os.path.join(DIR, "enwiki-zhwiki-matched-property-all.dat")
 ZHWIKI_BAIDU  = os.path.join(DIR, "zhwiki-baidu-matched-property-all.dat")
 ENWIKI_BAIDU  = os.path.join(DIR, "enwiki-baidu-matched-property-all.dat")
 
@@ -34,6 +35,17 @@ def read_enwiki_zhwiki(fn):
         if not enwiki in d:
             d[enwiki] = []
         d[enwiki].append(zhwiki)
+
+    #for line in codecs.open(fn, 'r', 'utf-8'):
+    #    enwiki, zhwiki = line.strip('\n').split('\t\t')
+    #    e1, e2 = enwiki.split('@@')
+    #    z1, z2 = enwiki.split('@@')
+    #    enwiki = e2+'\t'+e1
+    #    zhwiki = z2+'\t'+z1
+
+    #    if not enwiki in d:
+    #        d[enwiki] = []
+    #    d[enwiki].append(zhwiki)
     return d
 
 def read_zhwiki_baidu(fn):

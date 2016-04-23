@@ -35,11 +35,23 @@ ZHWIKI_TEMPLATE_LABEL = os.path.join(DIR, "zhwiki-20160203-template-triple.dat")
 ENWIKI_INHERIT_TEMPLATE_LABEL = os.path.join(DIR, "enwiki-20160305-inherit-template-triple.dat")
 ZHWIKI_INHERIT_TEMPLATE_LABEL = os.path.join(DIR, "zhwiki-20160203-inherit-template-triple.dat")
 
-MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "matched-template-label-2-1.dat")
-MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "matched-template-label-2-2.dat")
-MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "matched-template-label-2-3.dat")
-MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "matched-template-label-2-4.dat")
-MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "matched-template-label-all-2.dat")
+#MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "matched-template-label-2-1.dat")
+#MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "matched-template-label-2-2.dat")
+#MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "matched-template-label-2-3.dat")
+#MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "matched-template-label-2-4.dat")
+#MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "matched-template-label-all-2.dat")
+
+#MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "enwiki-zhwiki-matched-property-1.dat")
+#MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "enwiki-zhwiki-matched-property-2.dat")
+#MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "enwiki-zhwiki-matched-property-3.dat")
+#MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "enwiki-zhwiki-matched-property-4.dat")
+#MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "enwiki-zhwiki-matched-property-all.dat")
+
+MATCHED_TEMPLATE_LABEL1 = os.path.join(DIR, "enwiki-zhwiki-matched-property-merged-1.dat")
+MATCHED_TEMPLATE_LABEL2 = os.path.join(DIR, "enwiki-zhwiki-matched-property-merged-2.dat")
+MATCHED_TEMPLATE_LABEL3 = os.path.join(DIR, "enwiki-zhwiki-matched-property-merged-3.dat")
+MATCHED_TEMPLATE_LABEL4 = os.path.join(DIR, "enwiki-zhwiki-matched-property-merged-4.dat")
+MATCHED_TEMPLATE_LABEL_ALL = os.path.join(DIR, "enwiki-zhwiki-matched-property-merged-all.dat")
 
 MATCHED_TEMPLATE = os.path.join(DIR, "template.cl")
 MATCHED_INSTANCE = os.path.join(DIR, "enwiki.zh.en.title.cl")
@@ -63,7 +75,8 @@ def find_matched_1():
             for tem_label, prop_label in enwiki[tem].iteritems():
                 if tem_label in zhwiki[tem]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem, tem_label, prop_label, zhwiki[tem][tem_label]))
-                    all_matched[tem+'###'+prop_label] = tem+'###'+zhwiki[tem][tem_label]
+                    #all_matched[tem+'###'+prop_label] = tem+'###'+zhwiki[tem][tem_label]
+                    all_matched[prop_label.strip()+'@@'+tem] = zhwiki[tem][tem_label].strip()+'@@'+tem
                     fw.flush()
             if tem in matched_tem: #中英两个template名字相同，之后不作处理
                 matched_tem.pop(tem)
@@ -84,7 +97,8 @@ def find_matched_2():
             for tem_label, prop_label in enwiki[tem_en].iteritems():
                 if tem_label in zhwiki[tem_zh]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, tem_label, prop_label, zhwiki[tem_zh][tem_label]))
-                    all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    #all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    all_matched[prop_label.strip()+'@@'+tem_zh] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
                     fw.flush()
     fw.close()
 
@@ -116,7 +130,8 @@ def find_matched_3():
             for tem_label, prop_label in enwiki[tem_en].iteritems():
                 if tem_label in zhwiki[tem_zh]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, tem_label, tem_en+'###'+prop_label, tem_zh+'###'+zhwiki[tem_zh][tem_label]))
-                    all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    #all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    all_matched[prop_label.strip()+'@@'+tem_en] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
                     fw.flush()
     fw.close()
 
@@ -150,7 +165,8 @@ def find_matched_4():
                         if v == v2 or matched_ins[v] == v2:
                             #print "%s,%s,%s,%s"%(v, v2, k, k2)
                             fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, '###', tem_en+'###'+k, tem_zh+'###'+k2))
-                            all_matched[tem_en+'###'+k] = tem_zh+'###'+k
+                            #all_matched[tem_en+'###'+k] = tem_zh+'###'+k
+                            all_matched[k.strip()+'@@'+tem_en] = k.strip() + '@@' + tem_zh
                             fw.flush()
 
     fw.close()
@@ -161,7 +177,7 @@ def merge():
     """
     fw = codecs.open(MATCHED_TEMPLATE_LABEL_ALL, 'w', 'utf-8')
     for en, zh in sorted(all_matched.iteritems()):
-        fw.write(en+'\t'+zh+'\n')
+        fw.write(en+'\t\t'+zh+'\n')
     fw.close()
 
 def merge_similar_tem(tem):
@@ -222,39 +238,39 @@ enwiki.update(read_template_triple(ENWIKI_INHERIT_TEMPLATE_LABEL))
 zhwiki = read_template_triple(ZHWIKI_TEMPLATE_LABEL)
 zhwiki.update(read_template_triple(ZHWIKI_INHERIT_TEMPLATE_LABEL))
 
-#enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
-##for l, tems in sorted(enwiki_label_tems.items()):
-##    print l, tems
-#print "Final Templates Set:", len(enwiki_label_tems)
-#with codecs.open(ENWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
-#    for tem, l in enwiki_tem_label.iteritems():
-#        fw.write("%s\t%s\n"%(tem, l))
-#
-#zhwiki_tem_label, zhwiki_label_tems = merge_similar_tem(zhwiki)
-##for l, tems in sorted(zhwiki_label_tems.items()):
-##    print l, tems
-#print "Final Templates Set:", len(zhwiki_label_tems)
-#with codecs.open(ZHWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
-#    for tem, l in zhwiki_tem_label.iteritems():
-#        fw.write("%s\t%s\n"%(tem, l))
-#
-#print "Origin enwiki templates:",len(enwiki)
-#for tem in enwiki.keys():
-#    temlabel = enwiki_tem_label[tem]
-#    if temlabel == tem:
-#        continue
-#    enwiki[temlabel].update(enwiki[tem])
-#    enwiki.pop(tem)
-#print "Left enwiki templates:",len(enwiki)
-#
-#print "Origin zhwiki templates:",len(zhwiki)
-#for tem in zhwiki.keys():
-#    temlabel = zhwiki_tem_label[tem]
-#    if temlabel == tem:
-#        continue
-#    zhwiki[temlabel].update(zhwiki[tem])
-#    zhwiki.pop(tem)
-#print "Left zhwiki templates:",len(zhwiki)
+enwiki_tem_label, enwiki_label_tems = merge_similar_tem(enwiki)
+#for l, tems in sorted(enwiki_label_tems.items()):
+#    print l, tems
+print "Final Templates Set:", len(enwiki_label_tems)
+with codecs.open(ENWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
+    for tem, l in enwiki_tem_label.iteritems():
+        fw.write("%s\t%s\n"%(tem, l))
+
+zhwiki_tem_label, zhwiki_label_tems = merge_similar_tem(zhwiki)
+#for l, tems in sorted(zhwiki_label_tems.items()):
+#    print l, tems
+print "Final Templates Set:", len(zhwiki_label_tems)
+with codecs.open(ZHWIKI_MERGED_TEMPLATE, 'w', 'utf-8') as fw:
+    for tem, l in zhwiki_tem_label.iteritems():
+        fw.write("%s\t%s\n"%(tem, l))
+
+print "Origin enwiki templates:",len(enwiki)
+for tem in enwiki.keys():
+    temlabel = enwiki_tem_label[tem]
+    if temlabel == tem:
+        continue
+    enwiki[temlabel].update(enwiki[tem])
+    enwiki.pop(tem)
+print "Left enwiki templates:",len(enwiki)
+
+print "Origin zhwiki templates:",len(zhwiki)
+for tem in zhwiki.keys():
+    temlabel = zhwiki_tem_label[tem]
+    if temlabel == tem:
+        continue
+    zhwiki[temlabel].update(zhwiki[tem])
+    zhwiki.pop(tem)
+print "Left zhwiki templates:",len(zhwiki)
 
 #case_enwiki_tem_label = dict((k.lower(), v) for k, v in enwiki_tem_label.items()) #忽略大小写
 #case_zhwiki_tem_label = dict((k.lower(), v) for k, v in zhwiki_tem_label.items()) #忽略大小写
@@ -270,10 +286,11 @@ print "ALL zhwiki template attributes:", sum([len(v) for v in zhwiki.values()])
 all_matched = {}
 
 find_matched_1()
-print "Matched templates with different label:",len(matched_tem)
-print "After method1, ALL Matched properties:",len(all_matched)
+logging.info("Matched templates with different label:%d"%len(matched_tem))
+logging.info("After method1, ALL Matched properties:%d"%len(all_matched))
+
 find_matched_2()
-print "After method2, ALL Matched properties:",len(all_matched)
+logging.info("After method2, ALL Matched properties:%d"%len(all_matched))
 
 enwiki_infobox_tem, enwiki_infobox = read_wiki_infobox(ENWIKI_INFOBOX)
 zhwiki_infobox_tem, zhwiki_infobox = read_wiki_infobox(ZHWIKI_INFOBOX)
@@ -285,9 +302,9 @@ zhwiki_infobox_tem = {k: v for k, v in zhwiki_infobox_tem.iteritems() if k in ma
 zhwiki_infobox = {k: v for k, v in zhwiki_infobox.iteritems() if k in matched_ins_zhwiki}
 
 find_matched_3()
-print "After method3, ALL Matched properties:",len(all_matched)
+logging.info("After method3, ALL Matched properties:%d"%len(all_matched))
 find_matched_4()
-print "After method4, ALL Matched properties:",len(all_matched)
+logging.info("After method4, ALL Matched properties:%d"%len(all_matched))
 
 merge()
 

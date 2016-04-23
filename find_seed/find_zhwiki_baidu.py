@@ -5,6 +5,7 @@ import sys,os
 import re
 
 from difflib import SequenceMatcher
+import Levenshtein
 
 sys.path.append('..')
 from utils.logger import *
@@ -25,9 +26,10 @@ ZHWIKI_BAIDU_ALIGNMENT_ALL = "/data/xlore20160223/Template/zhwiki-baidu-matched-
 def similar(a, b):
     seta = set(re.findall(r'\d+', a))
     setb = set(re.findall(r'\d+', b))
-    if len(seta) > 0 or len(setb) > 0:
+    if len(seta) > 0 and len(setb) > 0:
         return len(seta&setb)*1.0 / len(seta|setb)
-    return SequenceMatcher(None, a, b).ratio()
+    #return SequenceMatcher(None, a, b).ratio()
+    return Levenshtein.ratio(a,b)
 
 def read_wiki_infobox(fn):
     d = {}
@@ -168,19 +170,29 @@ def find_aligned_attributes_3(baidufn, fo, zhwiki, all_matched):
                 continue
 
             k, v = fact.split(':::')
+
             for tem, infos in zhwiki[article].iteritems():
                 if not tem in align_result:
                     align_result[tem] = {}
 
+                matched_zhwiki_key = set() #已经匹配的zhwiki property，我们认为一个zhwiki_property在一篇百度词条下只可能与一个百度属性对齐
+                #for k1, v1 in infos.iteritems():
+
+                #    if (k1, k) in align_result[tem]:
+                #        matched_zhwiki_key.add(k1)
+
                 for k1, v1 in infos.iteritems():
 
-                    if k == k1 or k == label.clean_label(k1):
+                    if k1 in matched_zhwiki_key:
+                        continue;
+
+                    if tem in all_matched and (k1, k) in all_matched[tem]:
+                        matched_zhwiki_key.add(k1)
                         continue
 
                     if similar(v, v1) > SIMILAR: #
                         c = align_result[tem].get((k1, k), 0) + 1
                         align_result[tem][(k1, k)] = c
-
 
     logging.info('Method 3: Template Number: %d'%len(align_result))
     attr_num = 0
@@ -214,7 +226,6 @@ def merge(all_matched, fo):
                 fw.write("%s\t%s\t%s\n"%(tem, zhwiki, baidu))
                 fw.flush()
 
-
 if __name__=='__main__':
 
     import time
@@ -227,5 +238,5 @@ if __name__=='__main__':
     find_aligned_attributes_3(BAIDU_INFOBOX, ZHWIKI_BAIDU_ALIGNMENT_3, zhwiki, all_matched)
     merge(all_matched, ZHWIKI_BAIDU_ALIGNMENT_ALL)
 
-    print 'Time Consuming:',time.time()-start
+    logging.info('Time Consuming:%f'%(time.time()-start))
 
