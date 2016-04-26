@@ -27,7 +27,7 @@ SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-all.dat")
 #BAIDU_DIR = "/Users/Miyayx/data/small"
 #BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "small-baidu-title-property.dat")
 #BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "small-baidu-instance-concept.dat")
-#
+
 #ENWIKI_DIR = "/Users/Miyayx/data/small"
 #ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "small-enwiki-infobox.dat")
 #ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "small-enwiki-category.dat")
@@ -36,7 +36,9 @@ SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-all.dat")
 
 #WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
 #WIKI_CROSSLINGUAL = "/Users/Miyayx/data/cl.en.zh.all"
-WIKI_CROSSLINGUAL = "/data/xlore20160223/Template/cl.en.zh.all"
+#WIKI_CROSSLINGUAL = "/data/xlore20160223/Template/cl.en.zh.all"
+WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
+#WIKI_CROSSLINGUAL = "/Users/Miyayx/data/cl.en.zh.all"
 BAIDU_CROSSLINGUALL = ""
 
 def clean_baidu_label(label):

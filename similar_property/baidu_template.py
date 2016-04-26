@@ -80,6 +80,96 @@ def tfidf_filter(tem_attrs_count, tem_zhins):
             idf = math.log(len(tem_attrs_count)/(0.1+sum([1 for t in tem_attrs_count if a in tem_attrs_count[t]])*1.0))
             #print t, a, tf*idf
 
+def generate_domain_properties():
+    tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
+    tem_ins = read_wiki_template_instance(ENWIKI_INFOBOX)
+    inses = []
+    
+    #所有wiki instance
+    for domain in tem_domain.itervalues():
+        for prop in domain.wiki_properties.values():
+            #inses += prop.articles
+            inses += prop.infobox.keys()
+
+    #计算wiki property在特定domain下的常用程度
+    for tem, domain in tem_domain.iteritems():
+        for prop in domain.wiki_properties.values():
+            #prop.popular = len(prop.articles)*0.1/len(tem_ins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_ins[tem])
+
+    #加入翻译结果
+    add_translate_labels(tem_domain)
+    add_translate_values(tem_domain)
+
+    ins_con = read_wiki_instance_concept(ENWIKI_INSTANCE_CONCEPT, set(inses))
+    del inses
+    tem_con = {}
+    print "tem_con"
+    for tem, inses in tem_ins.iteritems():
+        s = []
+        for ins in inses:
+            if ins in ins_con:
+                s += ins_con[ins]
+        tem_con[tem] = set(s)
+    del tem_ins, ins_con
+
+    tem_zhcon = replace_by_crosslingual(tem_con, WIKI_CROSSLINGUAL)
+    del tem_con
+    zh_con_ins = read_baidu_concept_instance(BAIDU_INSTANCE_CONCEPT)
+    tem_zhins = {}
+    print "tem_zhins"
+    for tem, cons in tem_zhcon.iteritems():
+        s = []
+        for con in cons:
+            if con in zh_con_ins:
+                s += zh_con_ins[con]
+        tem_zhins[tem] = set(s)
+    del zh_con_ins
+    zh_ins_attr = read_instance_property(BAIDU_INFOBOX)
+    tem_baiduattr_count = {}
+    for tem, inses in tem_zhins.iteritems():
+        a_c = {}
+        for ins in inses:
+            if ins in zh_ins_attr:
+                for a in zh_ins_attr[ins]:
+                    a_c[a] = a_c.get(a, 0)+1
+        tem_baiduattr_count[tem] = a_c
+    ##### 算法
+    #tfidf_filter(tem_baiduattr_count, tem_zhins)
+    tem_baiduattr = tfidf_filter2(tem_baiduattr_count)
+    #tem_baiduattr = tem_baiduattr_count
+    #####
+
+    #count = 0
+    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE, 'w', 'utf-8')
+    #print "Templates:",len(tem_baiduattr_count) #记录领域下全部的attribute
+    #for tem, attrs in sorted(tem_baiduattr_count.items()):
+    #    if len(attrs) > 0:
+    #        print tem, len(attrs)
+    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #        f.flush()
+    #        count += 1
+    #f.close()
+    #print "Templates which have attrs Count:",count
+    
+    baidu_properties = read_baidu_properties(BAIDU_INFOBOX)
+    for tem, attrs in tem_baiduattr.items():
+        if len(attrs) > 0:
+            #for a in attrs.keys()[:100]:
+            for a, v in sorted(attrs.iteritems(), key=lambda x: x[1], reverse=True)[:]:
+                try:
+                    tem_domain[tem].baidu_properties[a] = baidu_properties[a]
+                except:
+                    print 'Error Key',a
+
+    #计算baidu property在特定domain下的常用程度
+    for tem, domain in tem_domain.iteritems():
+        for prop in domain.baidu_properties.values():
+            #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
+
+    return tem_domain
+    
 def tfidf_filter2(tem_attrs_count):
     """
     use scikit-learn

@@ -122,6 +122,8 @@ def label_similarity(p1, p2):
 
 def article_similarity(p1, p2, cl):
     print "article_similarity"
+    if not p1.infobox or not p2.infobox:
+        return 0
     n = 0
     if len(p1.infobox.keys()) == 0 or len(p2.infobox.keys()) == 0:
         return 0
