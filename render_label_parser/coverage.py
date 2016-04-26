@@ -7,8 +7,6 @@ sys.path.append('..')
 from utils.logger import *
 initialize_logger('./coverage.log')
 from fileio import *
-from infobox_replace import *
-
 
 def template_replace(a_tem, tem_redirect, tems):
     """
@@ -76,9 +74,11 @@ def replace_infobox(a_tem, a_infobox, tem_triple, infobox_fn):
                         continue
                     if a in a_infobox and tem in tem_triple and p in tem_triple[a_tem[a]]:
                         p = tem_triple[tem][p]
-                    pairs.append(p+"::::="+v)
+                    if len(p) > 0 and len(v) > 0:
+                        pairs.append(p+"::::="+v)
         
                 info = "::::;".join(pairs)
+                info = info.strip().strip("::::;") #最后不要留空
                 #print "tem2:",tem
                 fw.write(a + '\t\t' + tem + ':::::'+info+'\n')
                 fw.flush()
@@ -147,18 +147,18 @@ if __name__=="__main__":
 
     global WIKI
 
-    #WIKI = "enwiki"
-    #tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
-    #tem_triple.update(read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-inherit-template-triple.dat")))
-    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
-    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
+    WIKI = "enwiki"
+    tem_triple = read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-template-triple.dat"))
+    tem_triple.update(read_template_triple(os.path.join(DIR, "Template/enwiki-20160305-inherit-template-triple.dat")))
+    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/enwiki-template-redirect.dat"))
+    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat"))
 
-    WIKI = "zhwiki"
-    tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
-    tem_triple.update(read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-inherit-template-triple.dat")))
-    tem_triple.update(read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-manual-template-triple.dat")))
-    tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
-    a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
+    #WIKI = "zhwiki"
+    #tem_triple = read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-template-triple.dat"))
+    #tem_triple.update(read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-inherit-template-triple.dat")))
+    #tem_triple.update(read_template_triple(os.path.join(DIR, "Template/zhwiki-20160203-manual-template-triple.dat")))
+    #tem_redirect = read_redirect_template(os.path.join(DIR, "Template/zhwiki-template-redirect.dat"))
+    #a_tem, a_infobox = read_wiki_infobox(os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat"))
 
     tem_redirect.update(dict((k.lower(), v) for k,v in tem_redirect.iteritems()))
     tem_redirect.update(dict((tem.lower(), tem) for tem in set(tem_triple.keys())))
@@ -170,8 +170,8 @@ if __name__=="__main__":
 
     #a_infobox = infobox_replace(a_infobox, a_tem, tem_triple)
 
-    #replace_infobox(a_tem, a_infobox, tem_triple, os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat")) 
-    replace_infobox(a_tem, a_infobox, tem_triple, os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat")) 
+    replace_infobox(a_tem, a_infobox, tem_triple, os.path.join(DIR, "wikiExtractResult/enwiki-infobox-tmp.dat")) 
+    #replace_infobox(a_tem, a_infobox, tem_triple, os.path.join(DIR, "wikiExtractResult/zhwiki-infobox-tmp.dat")) 
 
     #template_coverage(tem_triple, a_tem, tem_redirect)
     #infobox_coverage(tem_triple, a_tem, a_infobox)

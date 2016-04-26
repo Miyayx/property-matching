@@ -132,7 +132,7 @@ def domain_constrain_baidu(tem_domain, tem_zhins):
 
 def generate_domain_properties():
     tem_domain = read_wiki_properties(ENWIKI_INFOBOX)
-    tem_baiduattr_count, tem_ins, tem_zhins = find_attribute_in_baidu()
+    tem_baiduattr_count, tem_ins, tem_zhins = find_attribute_in_baidu4()
 
     #加入wiki popular信息
     add_popular_wiki(tem_domain, tem_ins)
@@ -372,17 +372,19 @@ def find_attribute_in_baidu4():
     #tfidf_filter(tem_baiduattr_count, tem_zhins)
     tfidf_filter2(tem_baiduattr_count)
 
-    count = 0
-    f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4-2", 'w', 'utf-8')
-    print "Templates:",len(tem_baiduattr_count)
-    for tem, attrs in sorted(tem_baiduattr_count.items()):
-        if len(attrs) > 0:
-            print tem, len(attrs)
-            f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-            f.flush()
-            count += 1
-    f.close()
-    print "Templates which have attrs Count:",count
+    #count = 0
+    #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4-2", 'w', 'utf-8')
+    #print "Templates:",len(tem_baiduattr_count)
+    #for tem, attrs in sorted(tem_baiduattr_count.items()):
+    #    if len(attrs) > 0:
+    #        print tem, len(attrs)
+    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #        f.flush()
+    #        count += 1
+    #f.close()
+    #print "Templates which have attrs Count:",count
+
+    return tem_baiduattr_count, tem_enins, tem_zhins
 
 if __name__ == "__main__":
     import time
