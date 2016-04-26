@@ -373,7 +373,7 @@ def find_attribute_in_baidu4():
     tfidf_filter2(tem_baiduattr_count)
 
     count = 0
-    f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4", 'w', 'utf-8')
+    f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4-2", 'w', 'utf-8')
     print "Templates:",len(tem_baiduattr_count)
     for tem, attrs in sorted(tem_baiduattr_count.items()):
         if len(attrs) > 0:

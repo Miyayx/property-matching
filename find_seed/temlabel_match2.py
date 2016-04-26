@@ -12,7 +12,6 @@ initialize_logger('./temlabel_match2.log')
 需要跨语言链接：
     template.cl文件从template_cl.py获得
 
-
 中英文维基内部的属性对齐
 与match_temlabel.py不一样的是：以template-attribute标识一个attribute
 
@@ -75,8 +74,8 @@ def find_matched_1():
             for tem_label, prop_label in enwiki[tem].iteritems():
                 if tem_label in zhwiki[tem]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem, tem_label, prop_label, zhwiki[tem][tem_label]))
-                    #all_matched[tem+'###'+prop_label] = tem+'###'+zhwiki[tem][tem_label]
-                    all_matched[prop_label.strip()+'@@'+tem] = zhwiki[tem][tem_label].strip()+'@@'+tem
+                    all_matched[tem+'###'+prop_label] = tem+'###'+zhwiki[tem][tem_label]
+                    #all_matched[prop_label.strip()+'@@'+tem] = zhwiki[tem][tem_label].strip()+'@@'+tem
                     fw.flush()
             if tem in matched_tem: #中英两个template名字相同，之后不作处理
                 matched_tem.pop(tem)
@@ -97,8 +96,8 @@ def find_matched_2():
             for tem_label, prop_label in enwiki[tem_en].iteritems():
                 if tem_label in zhwiki[tem_zh]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, tem_label, prop_label, zhwiki[tem_zh][tem_label]))
-                    #all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
-                    all_matched[prop_label.strip()+'@@'+tem_zh] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
+                    all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    #all_matched[prop_label.strip()+'@@'+tem_zh] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
                     fw.flush()
     fw.close()
 
@@ -130,8 +129,8 @@ def find_matched_3():
             for tem_label, prop_label in enwiki[tem_en].iteritems():
                 if tem_label in zhwiki[tem_zh]:
                     fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, tem_label, tem_en+'###'+prop_label, tem_zh+'###'+zhwiki[tem_zh][tem_label]))
-                    #all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
-                    all_matched[prop_label.strip()+'@@'+tem_en] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
+                    all_matched[tem_en+'###'+prop_label] = tem_zh+'###'+zhwiki[tem_zh][tem_label]
+                    #all_matched[prop_label.strip()+'@@'+tem_en] = zhwiki[tem_zh][tem_label].strip()+'@@'+tem_zh
                     fw.flush()
     fw.close()
 
@@ -165,8 +164,8 @@ def find_matched_4():
                         if v == v2 or matched_ins[v] == v2:
                             #print "%s,%s,%s,%s"%(v, v2, k, k2)
                             fw.write('%s\t%s\t%s\t%s\n'%(tem_en+'###'+tem_zh, '###', tem_en+'###'+k, tem_zh+'###'+k2))
-                            #all_matched[tem_en+'###'+k] = tem_zh+'###'+k
-                            all_matched[k.strip()+'@@'+tem_en] = k.strip() + '@@' + tem_zh
+                            all_matched[tem_en+'###'+k] = tem_zh+'###'+k
+                            #all_matched[k.strip()+'@@'+tem_en] = k.strip() + '@@' + tem_zh
                             fw.flush()
 
     fw.close()

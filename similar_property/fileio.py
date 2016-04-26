@@ -39,8 +39,11 @@ ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "enwiki-category.dat")
 WIKI_CROSSLINGUAL = "/data/xlore20160223/Template/cl.en.zh.all"
 BAIDU_CROSSLINGUALL = ""
 
+def clean_baidu_label(label):
+    return label.strip().replace(" ","").replace(" ","").replace("\t","").replace(u'\u200b','').replace(u'\u3000','')
 
 def read_baidu_properties(fn):
+    print "Reading %s ..."%fn
     d = {}
     for line in codecs.open(fn, 'r','utf-8'):
         try:
@@ -50,6 +53,7 @@ def read_baidu_properties(fn):
         for item in info.split('::;'):
             try:
                 p, v = item.split(':::')
+                p = clean_baidu_label(p)
             except:
                 continue
             prop = d.get(p, Property(p))
@@ -74,7 +78,8 @@ def read_wiki_properties(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         if not tem in d:
             d[tem] = Domain(tem)
@@ -101,7 +106,8 @@ def read_wiki_template_instance(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         if not tem in d:
             d[tem] = set()
@@ -117,7 +123,8 @@ def read_wiki_infobox(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         ad = d.get(tem, ArticleDomain(tem))
         article = Article(title)
@@ -141,6 +148,7 @@ def read_baidu_infobox(fn):
             d[article] = {}
             for fact in facts.split('::;'):
                 p, v = fact.split(':::')
+                p = clearn_baidu_label(p)
                 if len(v) > 0:
                     d[article][p] = v
         except:
@@ -183,7 +191,7 @@ def read_instance_property(fn):
     for line in codecs.open(fn, 'r', 'utf-8'):
         try:
             article, facts = line.strip('\n').split('\t')
-            d[article] = set([fact.split(':::')[0] for fact in facts.split('::;')])
+            d[article] = set([clean_baidu_label(fact.split(':::')[0]) for fact in facts.split('::;')])
         except:
             print line
     return d

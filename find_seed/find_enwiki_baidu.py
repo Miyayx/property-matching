@@ -6,8 +6,9 @@ ENWIKI_ZHWIKI = os.path.join(DIR, "matched-template-label-all-2.dat")
 #ENWIKI_ZHWIKI = os.path.join(DIR, "enwiki-zhwiki-matched-property-all.dat")
 ZHWIKI_BAIDU  = os.path.join(DIR, "zhwiki-baidu-matched-property-all.dat")
 ENWIKI_BAIDU  = os.path.join(DIR, "enwiki-baidu-matched-property-all.dat")
+TEMPLATE_CL = os.path.join(DIR, "template.cl")
 
-def find_enwiki_baidu(enwiki_zhwiki, zhwiki_baidu, fo):
+def find_enwiki_baidu(enwiki_zhwiki, zhwiki_baidu, cl, fo):
     """
     enwiki_zhwiki: 
         k: entem \t enlabel
@@ -58,9 +59,12 @@ def read_zhwiki_baidu(fn):
         d[zhwiki].append(baidu)
     return d
 
+def read_template_cross_lingual(fn):
+    return dict((line.strip('\n').split('\t')) for line in codecs.open(fn, 'r', 'utf-8'))
+
 if __name__=="__main__":
+    cl = read_template_cross_lingual(TEMPLATE_CL)
     enwiki_zhwiki = read_enwiki_zhwiki(ENWIKI_ZHWIKI)
     zhwiki_baidu  = read_zhwiki_baidu(ZHWIKI_BAIDU)
-    find_enwiki_baidu(enwiki_zhwiki, zhwiki_baidu, ENWIKI_BAIDU)
-
+    find_enwiki_baidu(enwiki_zhwiki, zhwiki_baidu, cl, ENWIKI_BAIDU)
 
