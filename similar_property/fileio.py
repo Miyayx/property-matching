@@ -5,38 +5,45 @@ import codecs
 from model import *
 
 #DIR="/home/xlore/server36/infobox/"
-DIR="/Users/Miyayx/data"
+#DIR="/Users/Miyayx/data"
+DIR = "/data/xlore20160223/Template/"
 ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
-ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR, "enwiki-propertyList-translated.dat")
-ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR, "enwiki-infobox-value-translated.dat")
+ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR+"translate", "enwiki-propertyList-translated.dat")
+ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR+"translate", "enwiki-infobox-value-translated.dat")
 
 #BAIDU_DIR = "/home/xlore/server36/baikedump/"
-#BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "baidu-title-property.dat")
-#BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "baidu-instance-concept.dat")
-#
+BAIDU_DIR = "/data/baidu/"
+BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "baidu-title-property.dat")
+BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "baidu-instance-concept.dat")
+
 #ENWIKI_DIR = "/home/xlore/disk2/raw.wiki/"
-#ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "enwiki-infobox-new.dat")
-#ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "enwiki-category.dat")
-#
-#SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-2.dat")
+ENWIKI_DIR = "/data/xlore20160223/wikiExtractResult/"
+ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "enwiki-infobox-tmp-infobox-replaced.dat")
+ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "enwiki-category.dat")
+
+SEEDS=os.path.join(DIR, "enwiki-baidu-matched-property-all.dat")
 
 #BAIDU_DIR = "/home/xlore/server36/infobox/small"
-BAIDU_DIR = "/Users/Miyayx/data/small"
-BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "small-baidu-title-property.dat")
-BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "small-baidu-instance-concept.dat")
-
-ENWIKI_DIR = "/Users/Miyayx/data/small"
-ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "small-enwiki-infobox.dat")
-ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "small-enwiki-category.dat")
-
-SEEDS=os.path.join(ENWIKI_DIR, "small-enwiki-baidu-matched-property.dat")
+#BAIDU_DIR = "/Users/Miyayx/data/small"
+#BAIDU_INFOBOX=os.path.join(BAIDU_DIR, "small-baidu-title-property.dat")
+#BAIDU_INSTANCE_CONCEPT=os.path.join(BAIDU_DIR, "small-baidu-instance-concept.dat")
+#
+#ENWIKI_DIR = "/Users/Miyayx/data/small"
+#ENWIKI_INFOBOX=os.path.join(ENWIKI_DIR, "small-enwiki-infobox.dat")
+#ENWIKI_INSTANCE_CONCEPT=os.path.join(ENWIKI_DIR, "small-enwiki-category.dat")
+#
+#SEEDS=os.path.join(ENWIKI_DIR, "small-enwiki-baidu-matched-property.dat")
 
 #WIKI_CROSSLINGUAL = "/home/xlore/Xlore/etc/data/cross.lingual.links/cl.en.zh.all"
-WIKI_CROSSLINGUAL = "/Users/Miyayx/data/cl.en.zh.all"
+#WIKI_CROSSLINGUAL = "/Users/Miyayx/data/cl.en.zh.all"
+WIKI_CROSSLINGUAL = "/data/xlore20160223/Template/cl.en.zh.all"
 BAIDU_CROSSLINGUALL = ""
 
+def clean_baidu_label(label):
+    return label.strip().replace(" ","").replace(" ","").replace("\t","").replace(u'\u200b','').replace(u'\u3000','')
 
 def read_baidu_properties(fn):
+    print "Reading %s ..."%fn
     d = {}
     for line in codecs.open(fn, 'r','utf-8'):
         try:
@@ -46,6 +53,7 @@ def read_baidu_properties(fn):
         for item in info.split('::;'):
             try:
                 p, v = item.split(':::')
+                p = clean_baidu_label(p)
             except:
                 continue
             prop = d.get(p, Property(p))
@@ -70,19 +78,23 @@ def read_wiki_properties(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         if not tem in d:
             d[tem] = Domain(tem)
         for pair in infobox.split('::::;'):
-            p, v = pair.split('::::=')
-            prop = d[tem].wiki_properties.get(p, Property(p))
-            #prop.articles.append(title)
-            #if len(v) > 0:
-            #    prop.values.append(v)
-            if len(v) > 0:
-                prop.infobox[title] = v
-            d[tem].wiki_properties[p] = prop
+            try:
+                p, v = pair.split('::::=')
+                prop = d[tem].wiki_properties.get(p, Property(p))
+                #prop.articles.append(title)
+                #if len(v) > 0:
+                #    prop.values.append(v)
+                if len(v) > 0:
+                    prop.infobox[title] = v
+                d[tem].wiki_properties[p] = prop
+            except:
+                print pair
     return d
 
 def read_wiki_template_instance(fn):
@@ -97,7 +109,8 @@ def read_wiki_template_instance(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         if not tem in d:
             d[tem] = set()
@@ -113,7 +126,8 @@ def read_wiki_infobox(fn):
         title, info = line.strip('\n').split('\t\t')
         info = info.split('\t')[0]
         tem, infobox = info.split(':::::',1)
-        tem = 'template:'+tem
+        if not tem.lower().startswith('template'):
+            tem = 'template:'+tem
         
         ad = d.get(tem, ArticleDomain(tem))
         article = Article(title)
@@ -137,6 +151,7 @@ def read_baidu_infobox(fn):
             d[article] = {}
             for fact in facts.split('::;'):
                 p, v = fact.split(':::')
+                p = clearn_baidu_label(p)
                 if len(v) > 0:
                     d[article][p] = v
         except:
@@ -147,12 +162,17 @@ def read_wiki_instance_concept(fn, a_set):
     print "Reading wiki instance and concept ..."
     d = {}
     for line in codecs.open(fn, 'r', 'utf-8'):
-        article, categories = line.strip('\n').split('\t\t')
-        if a_set: #如果有a_set，以a_set作为限制，减少读入的数据量，只记录在a_set中的article 
-            if article in a_set:
+        try:
+            article, categories = line.strip('\n').split('\t\t')
+            if a_set: #如果有a_set，以a_set作为限制，减少读入的数据量，只记录在a_set中的article 
+                if article in a_set:
+                    d[article] = set(categories.split(';'))
+            else: #没有a_set，记录全部
                 d[article] = set(categories.split(';'))
-        else: #没有a_set，记录全部
-            d[article] = set(categories.split(';'))
+        except Exception,e:
+            #print e
+            #print line
+            pass
     return d
 
 def read_baidu_concept_instance(fn):
@@ -175,7 +195,7 @@ def read_instance_property(fn):
     for line in codecs.open(fn, 'r', 'utf-8'):
         try:
             article, facts = line.strip('\n').split('\t')
-            d[article] = set([fact.split(':::')[0] for fact in facts.split('::;')])
+            d[article] = set([clean_baidu_label(fact.split(':::')[0]) for fact in facts.split('::;')])
         except:
             print line
     return d

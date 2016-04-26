@@ -76,15 +76,15 @@ def valuesimilarity_literal(p1, p2):
 def valuesimilarity_number(p1, p2):
     a = [has_number(v) for v in p1.values]
     b = [has_number(v) for v in p2.values]
-    ar = a.count(True)*1.0/len(a)
-    br = b.count(True)*1.0/len(b)
+    ar = a.count(True)*1.0/(len(a)+1)
+    br = b.count(True)*1.0/(len(b)+1)
     return ar*br
 
 def valuesimilarity_date(p1, p2):
     a = [is_date(v) for v in p1.values]
     b = [is_date(v) for v in p2.values]
-    ar = a.count(True)*1.0/len(a)
-    br = b.count(True)*1.0/len(b)
+    ar = a.count(True)*1.0/(len(a)+1)
+    br = b.count(True)*1.0/(len(b)+1)
     return ar*br 
 
 def valuesimilarity_length(p1, p2):
@@ -105,9 +105,9 @@ def edit_distance_similarity(w1, w2):
 def label_similarity(p1, p2):
     if len(p1.label) == 0 or len(p2.label) == 0:
         return 0
-    if re.match(CHINESE, p2.label): #有中文 
-        #return max(edit_distance_similarity(p1.zhlabel, p2.label), edit_distance_similarity(p1.label, p2.label))
+    if re.match(CHINESE, p2.label) and p1.zhlabel: #有中文 
         return edit_distance_similarity(p1.zhlabel, p2.label)
+        #return max(edit_distance_similarity(p1.zhlabel, p2.label), edit_distance_similarity(p1.label, p2.label))
     return edit_distance_similarity(p1.label, p2.label)
     #return 1-jaccard_distance(p1.label, p2.label)
 

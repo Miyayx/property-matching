@@ -2,6 +2,11 @@
 
 import codecs
 import re
+import os
+
+"""
+把dump文件中关于Template的部分抽取出来，做进一步处理用
+"""
 
 def extract_template_dump(fi):
     TITLE_REGEX = r'<title>(.+)</title>'
@@ -16,7 +21,10 @@ def extract_template_dump(fi):
     while line:
         if re.search(TITLE_REGEX, line):
             title = re.findall(TITLE_REGEX, line)[0].strip()
-            if title.startswith('Template:') or title.startswith('模版'):
+            if title.startswith('Template:PRC admin/'):
+                line = fr.readline()
+                continue
+            if title.startswith('Template:') or title.startswith('模板'):
                 print "Recording "+title+"..."
                 n += 1
                 fw.write('<page>\n')
