@@ -14,17 +14,17 @@ def generate_features(pairs, fs=[], fs_cl=[]):
     matrix = np.zeros((n,m))
     for i, pair in enumerate(pairs):
         en, zh = pair
-        print "Features for:",en.label,zh.label
+        #print "Features for:",en.label,zh.label
         for j, fun in enumerate(fs):
             res = fun(en, zh)
-            print res
+            #print res
             matrix[i][j] = res
 
     for i, pair in enumerate(pairs):
         en, zh = pair
-        print "Features for:",en.label,zh.label
+        #print "Features for:",en.label,zh.label
         for j, fun in enumerate(fs_cl):
             res = fun(en, zh, cl)
-            print res
+            #print res
             matrix[i][j+len(fs)] = res
     return matrix

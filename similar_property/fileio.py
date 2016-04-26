@@ -94,7 +94,7 @@ def read_wiki_properties(fn):
                     prop.infobox[title] = v
                 d[tem].wiki_properties[p] = prop
             except:
-                print pair
+                print infobox
     return d
 
 def read_wiki_template_instance(fn):

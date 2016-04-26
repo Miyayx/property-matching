@@ -56,7 +56,7 @@ def add_popular_baidu(tem_domain, tem_zhins):
     for tem, domain in tem_domain.iteritems():
         for prop in domain.baidu_properties.values():
             #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
-            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/(len(tem_zhins[tem])+1)
 
 
 def tfidf_filter(tem_attrs_count, tem_zhins):
