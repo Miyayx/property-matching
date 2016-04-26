@@ -40,6 +40,7 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
                 try:
                     return f(*args, **kwargs)
                 except ExceptionToCheck, e:
+                    print e
                     msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
                     if logger:
                         logger.warning(msg)
@@ -60,10 +61,10 @@ class BaiduTranslater:
     secretKey = configs.BAIDU_SECRET_KEY
 
     def __init__(self):
-        self.httpClient = httplib.HTTPConnection('api.fanyi.baidu.com', 80, timeout=5)
+        self.httpClient = httplib.HTTPConnection('api.fanyi.baidu.com', 80, timeout=10)
 
     #@retry(Exception, tries=4, delay=3, backoff=2)
-    @retry((socket.timeout, httplib.CannotSendRequest), tries=4, delay=5, backoff=2)
+    #@retry((socket.timeout, httplib.CannotSendRequest), tries=4, delay=5, backoff=2)
     def translate(self, q, fromLang='en', toLang='zh'):
         try:
             q = q.encode('utf-8')
@@ -77,16 +78,16 @@ class BaiduTranslater:
         sign = m1.hexdigest()
         myurl = myurl+'?appid='+BaiduTranslater.appid+'&q='+urllib.quote(q)+'&from='+fromLang+'&to='+toLang+'&salt='+str(salt)+'&sign='+sign
  
-        #try:
-        self.httpClient.request('GET', myurl)
+        try:
+            self.httpClient.request('GET', myurl)
      
-        #response是HTTPResponse对象
-        response = self.httpClient.getresponse()
-        j = response.read()
-        return self.parse_json(j)
-        #except Exception, e:
-        #    print e
-        #    return None
+            #response是HTTPResponse对象
+            response = self.httpClient.getresponse()
+            j = response.read()
+            return self.parse_json(j)
+        except Exception, e:
+            print e
+            return None
 
     def close(self):
         if self.httpClient:

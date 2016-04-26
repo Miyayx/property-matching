@@ -178,7 +178,15 @@ def train_test(seed_matrix, seed_properties, labels):
         print p[0].label, p[1].label, prediction[i], labels[i]
         
     print "Presicion:", classifier.score(seed_matrix, labels)
-    print "Recall:", prediction[:len(pos_properties)].count(1)*1.0/len(pos_properties)
+    predict_pos = 0
+    actual_pos = 0
+    for i in range(len(labels)):
+        if prediction[i] == 1 and labels[0] == 1:
+            predict_pos += 1
+            actual_pos += 1
+        elif labels[0] == 1:
+            actual_pos += 1
+    print "Recall:", predict_pos*1.0/actual_pos
     return classifier
 
 

@@ -106,6 +106,7 @@ def label_similarity(p1, p2):
     if len(p1.label) == 0 or len(p2.label) == 0:
         return 0
     if re.match(CHINESE, p2.label): #有中文 
+        #return max(edit_distance_similarity(p1.zhlabel, p2.label), edit_distance_similarity(p1.label, p2.label))
         return edit_distance_similarity(p1.zhlabel, p2.label)
     return edit_distance_similarity(p1.label, p2.label)
     #return 1-jaccard_distance(p1.label, p2.label)
