@@ -119,18 +119,20 @@ def find_aligned_attributes_2(baidufn, fo, zhwiki, all_matched):
             k, v = fact.split(':::')
             for tem, infos in zhwiki[article].iteritems():
                 if not tem in align_result:
-                    align_result[tem] = set()
+                #    align_result[tem] = set()
+                    align_result[tem] = {}
 
                 for k1, v1 in infos.iteritems():
+                    if k1 == 'image' or k1 == u'图像':
+                        continue
 
                     if k == k1 or k == label.clean_label(k1):
                         continue
 
                     if len(v) > 0 and len(v1) > 0 and v == v1 and set(k)&set(k1): #属性名称有相同字，属性值一样
-                        align_result[tem].add((k1, k))
-
-    for tem, aligns in align_result.iteritems():
-        all_matched[tem] = all_matched.get(tem, set()).union(aligns)
+                        #align_result[tem].add((k1, k))
+                        c = align_result[tem].get((k1, k), 0) + 1
+                        align_result[tem][(k1, k)] = c
 
     logging.info('Method 2: Template Number: %d'%len(align_result))
     attr_num = 0
@@ -138,11 +140,30 @@ def find_aligned_attributes_2(baidufn, fo, zhwiki, all_matched):
        attr_num += len(attrs)
     logging.info('Method 2: Total aligned attrs: %d'%attr_num)
 
-    for tem, attrs in align_result.iteritems():
-        for zh, bai in attrs:
-            fw.write("%s\t%s\t%s\n"%(tem, zh, bai))
-            fw.flush()
+    #for tem, attrs in align_result.iteritems():
+    #    for zh, bai in attrs:
+    #        fw.write("%s\t%s\t%s\n"%(tem, zh, bai))
+    #        fw.flush()
+    #fw.close()
+
+    attr_num = 0
+    CONFIDENCE =2
+    import copy
+    for tem, attrs in copy.deepcopy(align_result).iteritems():
+        for align, c in attrs.iteritems():
+            if c > CONFIDENCE:
+                attr_num += 1
+                zh, bai = align
+                fw.write("%s\t%s\t%s\n"%(tem, zh, bai))
+                fw.flush()
+            else:
+                align_result[tem].pop(align)
     fw.close()
+
+    for tem, aligns in align_result.iteritems():
+        all_matched[tem] = all_matched.get(tem, set()).union(aligns)
+
+    logging.info('Method 2: Aligned attrs after filter: %d'%attr_num)
 
 def find_aligned_attributes_3(baidufn, fo, zhwiki, all_matched):
     """
@@ -182,6 +203,8 @@ def find_aligned_attributes_3(baidufn, fo, zhwiki, all_matched):
                 #        matched_zhwiki_key.add(k1)
 
                 for k1, v1 in infos.iteritems():
+                    if k1 == 'image' or k1 == u'图像':
+                        continue
 
                     if k1 in matched_zhwiki_key:
                         continue;
@@ -222,7 +245,7 @@ def merge(all_matched, fo):
     
     with codecs.open(fo, 'w', 'utf-8') as fw:
         for tem, matched in all_matched.iteritems():
-            for zhwiki, baidu in matched:
+            for zhwiki, baidu in sorted(matched):
                 fw.write("%s\t%s\t%s\n"%(tem, zhwiki, baidu))
                 fw.flush()
 
