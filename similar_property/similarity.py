@@ -162,16 +162,16 @@ def value_similarity2(p1, p2, cl):
     N = 0
     s = 0
 
-    with codecs.open("property-article-value.dat", "a", "utf-8") as fo:
+    with codecs.open("property-article-value.dat", "w", "utf-8") as fo:
         p1_list = []
         for a1, v1 in p1.infobox.iteritems():
             p1_list.append(a1+"::="+v1)
-        fo.write(p1.label+"\t"+";;;".join(p1_list)+"\n")
+        #fo.write(p1.label+"\t"+";;;".join(p1_list)+"\n")
 
         p2_list = []
         for a2, v2 in p2.infobox.iteritems():
             p2_list.append(a2+"::="+v2)
-        fo.write(p2.label+"\t"+";;;".join(p2_list)+"\n")
+        #fo.write(p2.label+"\t"+";;;".join(p2_list)+"\n")
 
     for a1, v1 in p1.infobox.iteritems():
         v2 = None
