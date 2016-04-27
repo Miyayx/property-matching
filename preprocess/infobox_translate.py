@@ -2,10 +2,12 @@
 
 import sys,os,re
 import codecs
+import time
 
 from utils import *
 from baidu_vip_translater import BaiduTranslater
 from baidu_translater import Translater
+from youdao_translater import YoudaoTranslater
 
 def start(fi, fo):
     
@@ -72,6 +74,26 @@ def label_translate(fi, fo, d={}):
         fw.write(t[0]+'\t'+t[1]+'\n')
     fw.close()
 
+def label_translate_youdao(fi, fo, d={}):
+    print 'Have translated:', len(d)
+    translater = YoudaoTranslater()
+    fw = codecs.open(fo, 'a', 'utf-8')
+    queries = []
+
+    for line in codecs.open(fi, 'r', 'utf-8'):
+        try:
+            q = line.strip('\n').replace('_', ' ')
+            if q in d:
+                continue
+            time.sleep(1)
+            res = translater.translate(q)
+            fw.write(q+'\t'+';;;'.join(res[q])+'\n')
+        except Exception,e:
+            print e
+            print q
+
+    fw.close()
+
 def load_dict(fi):
     return dict((line.strip('\n').split('\t')) for line in codecs.open(fi, 'r', 'utf-8'))
 
@@ -83,6 +105,7 @@ if __name__=="__main__":
     fi, fo = sys.argv[1], sys.argv[2]
     #start(fi, fo)
     d = load_dict(sys.argv[2])
-    label_translate(fi, fo, d)
+    #label_translate(fi, fo, d)
+    label_translate_youdao(fi, fo, d)
 
   
