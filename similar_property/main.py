@@ -3,11 +3,13 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn import svm
+from sklearn import cross_validation
 
 from fileio import *
 
 import features
 import baidu_template
+import baidu_template_article
 import synonym
 from similarity import *
 import random
@@ -78,8 +80,8 @@ def main():
     
     funs = []
     #funs = [popular_similarity]
-    funs = [label_similarity]
-    #funs = [label_similarity, popular_similarity]
+    #funs = [label_similarity]
+    funs = [label_similarity, popular_similarity]
     funs_cl = []
     #funs_cl = [value_similarity2]
     funs_cl = [article_similarity]
@@ -92,9 +94,9 @@ def main():
     logging.info("\t".join([fun.__name__ for fun in funs]))
     logging.info("\t".join([fun.__name__ for fun in funs_cl]))
 
-    for i in range(seed_properties):
+    for i in range(len(seed_properties)):
         p1, p2 = seed_properties[i]
-        logging.info(p1.label+"\t"+p2.label+"\t"+seed_matrix[i])
+        logging.info(p1.label+"\t"+p2.label+"\t"+str(seed_matrix[i]))
 
     classifier = train_test(seed_matrix, seed_properties, labels)
 
@@ -193,30 +195,39 @@ def train_test(seed_matrix, seed_properties, labels):
 
     print "\nLogistic Regression..."
     
-    #classifier = LogisticRegression(C=1.0)
-    classifier = svm.LinearSVC()
+    presicions = cross_validation.cross_val_score(LogisticRegression(), seed_matrix, labels, scoring='precision', cv=5)
+    recalls = cross_validation.cross_val_score(LogisticRegression(), seed_matrix, labels, scoring='recall', cv=5)
+    f1s = cross_validation.cross_val_score(LogisticRegression(), seed_matrix, labels, scoring='f1', cv=5)
+    logging.info("Precisions: %s"%str(presicions))
+    logging.info("Precision: %f"%presicions.mean())
+    logging.info("Recalls: %s"%str(recalls))
+    logging.info("Recall: %f"%recalls.mean())
+    logging.info("F1s: %s"%str(f1s))
+    logging.info("F1: %f"%f1s.mean())
+
+    classifier = LogisticRegression(C=1.0)
+    #classifier = svm.LinearSVC()
     classifier.fit(seed_matrix, labels)
     prediction =  classifier.predict(seed_matrix)
     for i, p in enumerate(seed_properties):
-        print p[0].label, p[1].label, prediction[i], labels[i]
+        logging.info("%s\t%s\t%d\t%d"%(p[0].label, p[1].label, prediction[i], labels[i]))
         
-    print "Presicion:", classifier.score(seed_matrix, labels)
-    predict_pos = 0
-    actual_pos = 0
-    for i in range(len(labels)):
-        if prediction[i] == 1 and labels[0] == 1:
-            predict_pos += 1
-            actual_pos += 1
-        elif labels[0] == 1:
-            actual_pos += 1
-    print "Recall:", predict_pos*1.0/actual_pos
+    #logging.info("Presicion: %f"%classifier.score(seed_matrix, labels))
+    #predict_pos = 0
+    #actual_pos = 0
+    #for i in range(len(labels)):
+    #    if prediction[i] == 1 and labels[0] == 1:
+    #        predict_pos += 1
+    #        actual_pos += 1
+    #    elif labels[0] == 1:
+    #        actual_pos += 1
+    #logging.info("Recall: %f"%(predict_pos*1.0/actual_pos))
     return classifier
-
 
 if __name__ == '__main__':
     import time
     start = time.time()
-    main_ins()
+    main()
     print time.time() - start
 
     

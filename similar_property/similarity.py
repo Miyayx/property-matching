@@ -122,7 +122,7 @@ def label_similarity(p1, p2):
 #    return n*1.0/min((len(p1.articles),len(p2.articles)))
 
 def article_similarity(p1, p2, cl):
-    print "article_similarity"
+    #print "article_similarity"
     n = 0
     if len(p1.infobox.keys()) == 0 or len(p2.infobox.keys()) == 0:
         return 0

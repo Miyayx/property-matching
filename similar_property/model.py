@@ -20,7 +20,7 @@ class Domain:
 class ArticleDomain:
     def __init__(self, t):
         self.domain = t #wiki template
-        self.articles = []
+        self.articles = {}
 
 class Article:
     def __init__(self, t):
