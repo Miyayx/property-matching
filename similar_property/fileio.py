@@ -8,7 +8,9 @@ from model import *
 #DIR="/Users/Miyayx/data"
 DIR = "/data/xlore20160223/Template/"
 ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE=os.path.join(DIR, "enwiki-template-baidu-attribute.dat")
-ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR+"translate", "enwiki-propertyList-translated.dat")
+ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE_NUMBER=os.path.join(DIR, "enwiki-template-baidu-attribute-number.dat")
+#ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR+"translate", "enwiki-propertyList-translated.dat")
+ENWIKI_PROPERTY_TRANSLATED=os.path.join(DIR+"translate", "enwiki-property-label-translated.dat")
 ENWIKI_INFOBOX_VALUE_TRANSLATED=os.path.join(DIR+"translate", "enwiki-infobox-value-translated.dat")
 
 #BAIDU_DIR = "/home/xlore/server36/baikedump/"
@@ -96,7 +98,7 @@ def read_wiki_properties(fn):
                     prop.infobox[title] = v
                 d[tem].wiki_properties[p] = prop
             except:
-                print pair
+                print infobox
     return d
 
 def read_wiki_template_instance(fn):
@@ -135,11 +137,14 @@ def read_wiki_infobox(fn):
         article = Article(title)
 
         for pair in infobox.split('::::;'):
-            p, v = pair.split('::::=')
-            if len(v) > 0:
-                prop = ArticleProperty(p)
-                prop.value = v
-                article.infobox[p] = prop
+            try:
+                p, v = pair.split('::::=')
+                if len(v) > 0:
+                    prop = ArticleProperty(p)
+                    prop.value = v
+                    article.infobox[p] = prop
+            except:
+                print infobox
         ad.articles[title] = article
         d[tem] = ad
     return d

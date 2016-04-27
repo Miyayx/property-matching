@@ -19,13 +19,22 @@ var page = 'Template:infobox film';
 //var page = 'template:infobox OS';
 //var page = 'template:电视节目信息框';
 //var page = 'Template:Infobox government cabinet';
-var language = 'zh';
+var language = 'en';
 //var fname = '/mnt/lmy_36/wikiraw/zhwiki-template-name.dat'
+<<<<<<< Updated upstream
+var fname = '../data/template.enwiki.infobox.left';
+//var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
+//console.log('fname:'+fname);
+//var fo = '/User/Miyayx/server36/infobox/enwiki-template-triple.dat'
+//var fo = '../data/enwiki-template-triple.dat'
+var fo = "";
+=======
 //var fname = '../data/template.zhwiki';
-var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
+//var fname = process.argv[2] ? process.argv[2]:'../data/xaa'  ;
 //console.log('fname:'+fname);
 //var fo = '/User/Shared/server36/infobox/enwiki-template-triple.dat'
-var fo = '../data/zhwiki-template-triple.dat'
+var fo = '/Users/Miyayx/data/new/zhwiki-template-triple.dat'
+>>>>>>> Stashed changes
 
 String.prototype.replaceAll = function(s1,s2){
 　　return this.replace(new RegExp(s1,"gm"),s2);
@@ -53,7 +62,7 @@ var get_template_labels = function(page, language) {
     infobox(page, language, function(err, data) {
         if (err) {
             // Oh no! Something goes wrong!
-            //console.log(err)
+            console.log(err)
             return;
         }
 
@@ -186,36 +195,36 @@ var get_template_labels = function(page, language) {
 }
 
 
-var flag = '';
-fs.exists(fo, function(exists) { 
-    if (exists) { 
-        //console.log(fo+" exists");
-        new lazy(fs.createReadStream(fo))
-        .on('end', function() { 
-            flag = flag.trim().split('\t')[0]; //作为断点的那个template
-            //console.log("flag="+flag);
+//var flag = '';
+//fs.exists(fo, function(exists) { 
+//    if (exists) { 
+//        //console.log(fo+" exists");
+//        new lazy(fs.createReadStream(fo))
+//        .on('end', function() { 
+//            flag = flag.trim().split('\t')[0]; //作为断点的那个template
+//            //console.log("flag="+flag);
+//
+//            var breakpoint = flag.length > 0 ? false: true;
+//
+//            new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+//                if (line.toString().trim() == flag){ //找到断点就设为true，之后的line都会被处理
+//                    breakpoint = true;
+//                    //console.log('breakpoiont = true')
+//                }
+//                if(breakpoint)
+//                    get_template_labels(line.toString(), language);
+//            });
+//        } )
+//        .lines.forEach(function(line){
+//            flag = line.toString(); //作为断点的那个template
+//        });
+//
+//    }else{
+//        new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
+//            get_template_labels(line.toString(), language);
+//      });
+//    }
+//}); 
 
-            var breakpoint = flag.length > 0 ? false: true;
 
-            new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-                if (line.toString().trim() == flag){ //找到断点就设为true，之后的line都会被处理
-                    breakpoint = true;
-                    //console.log('breakpoiont = true')
-                }
-                if(breakpoint)
-                    get_template_labels(line.toString(), language);
-            });
-        } )
-        .lines.forEach(function(line){
-            flag = line.toString(); //作为断点的那个template
-        });
-
-    }else{
-        new lazy(fs.createReadStream(fname, 'utf8')).lines.forEach(function(line) {
-            get_template_labels(line.toString(), language);
-      });
-    }
-}); 
-
-
-//get_template_labels(page, language);
+get_template_labels(page, language);

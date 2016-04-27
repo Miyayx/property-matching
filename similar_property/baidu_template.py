@@ -31,7 +31,16 @@ def add_translate_labels(tem_domain):
     tran = read_translate_result(ENWIKI_PROPERTY_TRANSLATED)
     for tem, domain in tem_domain.iteritems():
         for p, prop in domain.wiki_properties.iteritems():
-            prop.zhlabel = tran.get(prop.label, "")
+            if prop.label in tran:
+                prop.zhlabel = tran.get(prop.label, "")
+            else:
+                if '[[' in prop.label and ']]' in prop.label:
+                    label = re.findall(r"\[\[.*?\]\]", prop.label)[0]
+                    inlabel =re.findall(r"\[\[(.*?)\]\]", prop.label)[0] 
+                    label = prop.label.replace(label, inlabel.split('|')[-1])
+                    prop.zhlabel = tran.get(label, "")
+                else:
+                    prop.zhlabel = prop.label
 
 def add_translate_values(tem_domain):
     """
@@ -56,7 +65,7 @@ def add_popular_baidu(tem_domain, tem_zhins):
     for tem, domain in tem_domain.iteritems():
         for prop in domain.baidu_properties.values():
             #prop.popular = len(prop.articles)*0.1/len(tem_zhins[tem])
-            prop.popular = len(prop.infobox.keys())*0.1/len(tem_zhins[tem])
+            prop.popular = len(prop.infobox.keys())*0.1/(len(tem_zhins[tem])+1)
 
 
 def tfidf_filter(tem_attrs_count, tem_zhins):
@@ -195,7 +204,7 @@ def tfidf_filter2(tem_attrs_count):
     for i in range(len(tems)):
         a_tfidf = {}
         for j in range(len(attrs)):
-            if tfidf[i][j] > 0:
+            if tfidf[i][j] > 0.01:
                 a_tfidf[attrs[j]] = tfidf[i][j]
         for a, t in sorted(a_tfidf.iteritems(), key=lambda x:x[1], reverse=True)[:]:
             #print tems[i], a, t 
@@ -204,7 +213,7 @@ def tfidf_filter2(tem_attrs_count):
                 new_tem_attrs_tfidf[tems[i]] = {}
             new_tem_attrs[tems[i]].append(a)
             new_tem_attrs_tfidf[tems[i]][a] = t
-            f.write('%s %s %f\n'%(tems[i], a, t))
+            f.write('%s\t%s\t%f\n'%(tems[i], a, t))
     f.close()
     return new_tem_attrs_tfidf
 
@@ -460,19 +469,24 @@ def find_attribute_in_baidu4():
         tem_baiduattr_count[tem] = a_c
 
     #tfidf_filter(tem_baiduattr_count, tem_zhins)
-    tfidf_filter2(tem_baiduattr_count)
+    tem_baiduattr_count = tfidf_filter2(tem_baiduattr_count)
 
-    #count = 0
+    count = 0
+    total = 0
     #f = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE+"4-2", 'w', 'utf-8')
-    #print "Templates:",len(tem_baiduattr_count)
-    #for tem, attrs in sorted(tem_baiduattr_count.items()):
-    #    if len(attrs) > 0:
-    #        print tem, len(attrs)
-    #        f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
-    #        f.flush()
-    #        count += 1
+    f2 = codecs.open(ENWIKI_TEMPLATE_BAIDU_ATTRIBUTE_NUMBER+"4-tfidf0.01", 'w', 'utf-8')
+    print "Templates:",len(tem_baiduattr_count)
+    for tem, attrs in sorted(tem_baiduattr_count.items()):
+        if len(attrs) > 0:
+            total += len(attrs)
+            f2.write(tem+'\t'+str(len(attrs))+'\n')
+    #       f.write(tem+'\t'+':::'.join(attrs.keys())+'\n')
+    #       f.flush()
+            count += 1
     #f.close()
-    #print "Templates which have attrs Count:",count
+    f2.close()
+    print "Templates which have attrs Count:",count
+    print "Total Templates Attributes:",total
 
     return tem_baiduattr_count, tem_enins, tem_zhins
 
